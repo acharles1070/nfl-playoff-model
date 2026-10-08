@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environment
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data
+data/raw/
+data/interim/
+data/processed/
+
+# Trained-model artifacts and generated outputs (project root only).
+# Anchored with a leading slash: a bare `models/` also matched src/models/,
+# which silently kept all modeling code out of git.
+/models/
+/outputs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+# Local assistant config
+.claude/
+
+# Personal drafts (LinkedIn post, interview prep)
+/notes/
+
+# Stray R session files
+.Rhistory
+
+# Private analyses that use licensed third-party data (never published)
+/private/

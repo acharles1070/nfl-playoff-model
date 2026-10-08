@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beating the Bookie? An NFL Forecasting Experiment</title>
+<meta name="description" content="An interactive, beginner-friendly tour of an NFL playoff prediction project: how the model works, how I tested it honestly, and what I learned when it met the betting market.">
+<link rel="stylesheet" href="assets/style.css">
+<script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top">🏈 <b>Beating the Bookie?</b></a>
+    <nav class="nav" id="nav" aria-label="Chapters"></nav>
+    <a class="livelink" href="bracket/">Live bracket →</a>
+    <button class="iconbtn" id="theme" title="Toggle light / dark" aria-label="Toggle light or dark theme">◐</button>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<main id="top">
+
+<!-- ======================= HERO ======================= -->
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">A research project in honest forecasting</div>
+    <h1>Can a computer out-predict<br>the NFL playoffs?</h1>
+    <p class="lede">I built a prediction model from scratch, tested it with rules designed to stop me from fooling myself, and pitted it against the toughest opponent there is: the betting market. This page walks through every step, with things to click, for people who have never heard of a Kalman filter.</p>
+    <div class="caution col"><b class="k">Spoiler</b>I did <b>not</b> beat the market. This site is about <i>how I know that</i>, and about what I learned on the way: how easy it is to fool yourself with data, and what it takes to avoid it.</div>
+    <div class="stats" id="hero-stats"></div>
+    <a class="cta" href="#ch1">Start the tour ↓</a> <a class="cta ghost" href="bracket/">See the live 2027 bracket →</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ======================= 1 ======================= -->
+<section class="chapter reveal" id="ch1" data-title="Predicting">
+  <div class="chapno">CHAPTER 1</div>
+  <h2>A good prediction is a probability, not a pick</h2>
+  <div class="col">
+    <p>Saying “the Chiefs will win” is easy to say and almost impossible to judge. A better forecaster says <i>“the Chiefs win 64% of games like this one.”</i> Then you can check, over hundreds of games, whether 64% really means about 64 wins out of 100.</p>
+    <p>To score probabilities I use <span class="term" data-t="log-loss">log loss</span>. It rewards being right, and it punishes being <i>confidently</i> wrong far more than being cautiously wrong. Lower is better. Always saying “50/50” scores 0.693, so any useful model has to beat that.</p>
+  </div>
+  <div class="demo" id="demo-quiz"></div>
+  <div class="plain col"><b class="k">In plain English</b>If you said 90% and the home team lost, you took a big hit. If you said 60% and they lost, you took a small one. That's what makes honest, <span class="term" data-t="calibration">calibrated</span> probabilities the best strategy.</div>
+</section>
+
+<!-- ======================= 2 ======================= -->
+<section class="chapter reveal" id="ch2" data-title="Ingredients">
+  <div class="chapno">CHAPTER 2</div>
+  <h2>The ingredients: what the model is allowed to know</h2>
+  <div class="grid2">
+    <div class="card"><h3>📈 Play-by-play and EPA</h3><p>Every NFL play since 1999, each scored with <span class="term" data-t="epa">EPA</span> (expected points added): how many points that play added to or took from the drive. Average EPA per play is a much better read on a team than the final score, which is full of luck.</p></div>
+    <div class="card"><h3>🧑‍🎓 Quarterbacks</h3><p>The quarterback who takes the first snap is the starter, and each QB carries his own rating from team to team. A backup starting is a big deal, and the model sees it.</p></div>
+    <div class="card"><h3>🩹 Injuries and inactives</h3><p>Weekly injury reports and game-day inactive lists, turned into “how much of the roster's usual snaps are missing.” I tested these carefully; spoiler in Chapter 11.</p></div>
+    <div class="card"><h3>🎲 Betting lines: opponent only</h3><p>The betting market is <b>never an input</b>. It is the benchmark, the best forecaster I can compare against. Models that <i>use</i> the market are a different project.</p></div>
+  </div>
+  <div class="caution col"><b class="k">The one rule</b>A prediction for a game may only use information from <b>before that game was played</b>. It sounds obvious. Chapter 5 shows how easily it gets broken.</div>
+</section>
+
+<!-- ======================= 3 ======================= -->
+<section class="chapter reveal" id="ch3" data-title="Ratings">
+  <div class="chapno">CHAPTER 3</div>
+  <h2>Rating teams that keep changing</h2>
+  <div class="col">
+    <p>How good is a team? You never see it directly. You only see noisy results: one game they dominate, the next they escape with a fluke win. A <span class="term" data-t="kalman">Kalman filter</span> is a recipe for keeping a running belief: <b>after every game, move your estimate toward what you just saw, by an amount that depends on how sure you were</b>.</p>
+    <ul>
+      <li>If you're <i>unsure</i> about a team (early season), a game moves you a lot.</li>
+      <li>If you're <i>confident</i> (late season), one game barely moves you.</li>
+      <li>Between seasons, rosters change, so everyone is pulled back toward average and you become less sure.</li>
+    </ul>
+    <p>Below is a simplified, one-number version of the idea, running on <b>real 2025 games</b>. Drag the sliders and watch how “trusting each game more or less” changes the picture.</p>
+  </div>
+  <div class="demo" id="demo-kalman"></div>
+  <div class="plain col"><b class="k">In plain English</b>Dots are what happened in each game. The green line is my running belief about the team. If you tell it that single games are very noisy, it barely budges. If you tell it single games are gospel, it chases every result.</div>
+</section>
+
+<!-- ======================= 4 ======================= -->
+<section class="chapter reveal" id="ch4" data-title="Quarterbacks">
+  <div class="chapno">CHAPTER 4</div>
+  <h2>Quarterbacks change everything (sort of)</h2>
+  <div class="col">
+    <p>The full model rates three things per team: offense (without the QB), defense, and each quarterback separately. When a team swaps quarterbacks, the model swaps the rating too. Did it help? A little, but the evidence isn't as strong as it first looked.</p>
+  </div>
+  <div class="demo" id="demo-qb"></div>
+  <div class="found col"><b class="k">What I found</b>The QB layer improves log loss slightly (its interval just touches zero) and most clearly in games where a team's starter changed. But once you account for the many ideas I tested (Chapter 11), it's suggestive rather than proven. In the 111 playoff games it pointed the wrong way, which is too few games to say anything either way.</div>
+</section>
+
+<!-- ======================= 5 ======================= -->
+<section class="chapter reveal" id="ch5" data-title="Cheating">
+  <div class="chapno">CHAPTER 5</div>
+  <h2>The easiest way to fool yourself: peeking at the future</h2>
+  <div class="col">
+    <p>My first version of this project scored suspiciously well, as good as Las Vegas. The reason was <span class="term" data-t="leakage">leakage</span>: it rated every team using <i>full-season</i> statistics and then “predicted” games from earlier in that very season. It had read the answer key.</p>
+    <p>The demo below recreates the mistake with nothing but public EPA data. Flip the switch.</p>
+  </div>
+  <div class="demo" id="demo-leak"></div>
+  <div class="col">
+    <h3>How I stop it from happening again</h3>
+    <p>Every feature in the pipeline has a <b>perturbation test</b>: I scramble every result that happened <i>after</i> a game, rebuild the features, and check that the prediction for that game didn't change by even a decimal. If a number changes, something is peeking, and the test fails.</p>
+    <p>I also split time into a <b>development</b> window (where I select ideas) and a <b>holdout</b> window (to score them). I was not that disciplined from day one, as the next chapter admits.</p>
+  </div>
+</section>
+
+<!-- ======================= 6 ======================= -->
+<section class="chapter reveal" id="ch6" data-title="Testing">
+  <div class="chapno">CHAPTER 6</div>
+  <h2>Testing like it's the real thing: walk-forward</h2>
+  <div class="col"><p>To predict season S, the model only gets to learn from seasons <i>before</i> S, exactly like real life. I repeat that for every season, then add up the scores. This is called <span class="term" data-t="walk-forward">walk-forward validation</span>. Slide through the seasons:</p></div>
+  <div class="demo" id="demo-walk"></div>
+  <div class="grid2">
+    <div class="card"><h3>🧪 Development window</h3><p>Seasons 2002–2016, where ideas are selected (since Oct 6). Settings like “how fast do ratings forget?” were tuned on 2011–2016 only, then frozen.</p></div>
+    <div class="card"><h3>🔒 Holdout window</h3><p>Seasons 2017–2025: <b>2,494 games</b> with a betting line, including 111 playoff games. Every idea was scored here, so it is <b>not sealed</b>: the first model and about half the experiments were built when this was the only test window (Sep 30), and the formal split came on Oct 6. That is why I correct for how many looks I took, and why I replicated the main result on 2003–2009 (Chapter 11).</p></div>
+  </div>
+</section>
+
+<!-- ======================= 7 ======================= -->
+<section class="chapter reveal" id="ch7" data-title="Report card">
+  <div class="chapno">CHAPTER 7</div>
+  <h2>The report card</h2>
+  <div class="col"><p>Here is every model scored on the same 2,494 holdout games. Each step of sophistication helped, and the market is still ahead. The lines on the bars are 95% confidence ranges for the <i>gap</i> to the market.</p></div>
+  <div class="demo" id="demo-score"></div>
+  <div class="demo" id="demo-calib"></div>
+  <div class="found col"><b class="k">What I found</b>My champion model is far better than guessing and decently <span class="term" data-t="calibration">calibrated</span>, but the closing betting line is better by about 0.023 log loss, and that gap is statistically solid. Plausible reasons: the market sees late injury news and blends the opinions of many sharp bettors. I didn't test which matters most.</div>
+</section>
+
+<!-- ======================= 8 ======================= -->
+<section class="chapter reveal" id="ch8" data-title="Playoffs">
+  <div class="chapno">CHAPTER 8</div>
+  <h2>Simulating the playoffs</h2>
+  <div class="col">
+    <p>Single-game odds are only half the job. To get a team's chance of winning the Super Bowl you play out the bracket, with seeding, byes, home field and reseeding, thousands of times. Even a team that's favored in every game has a modest chance of winning it all, because it has to win three or four in a row.</p>
+    <p>This is the actual 2025 field with my model's game probabilities from before the playoffs began. Run it once to watch, or thousands of times for the odds, and then compare with what really happened.</p>
+  </div>
+  <div class="demo" id="demo-bracket"></div>
+  <div class="plain col"><b class="k">What's “uncertainty in team strength”?</b>My ratings are estimates, not truths. In each simulated season, every team gets a random nudge up or down, sized by how unsure the filter was about it. That makes a team's fortunes <i>linked across rounds</i> (a team that's secretly great tends to win several in a row), which is how real brackets behave.</div>
+</section>
+
+<!-- ======================= 9 ======================= -->
+<section class="chapter reveal" id="ch9" data-title="Time machine">
+  <div class="chapno">CHAPTER 9</div>
+  <h2>A time machine: the January 2026 playoffs</h2>
+  <div class="col">
+    <p>Chapter 8 simulated a bracket. Here is the honest test: I rewound the model to every week of the 2025 season (whose playoffs were played in <b>January 2026</b>) and asked, each time, <i>what bracket would you draw if you had to draw it today?</i> Every projection uses only games before that week. Then I scored the projections against what actually happened.</p>
+    <p>The bar to clear is a boring one: <b>just look at the standings</b>. If my simulation can't beat “whoever is in a playoff spot right now,” it isn't earning its keep.</p>
+  </div>
+  <div class="demo" id="demo-replay"></div>
+</section>
+
+<!-- ======================= 10 ======================= -->
+<section class="chapter reveal" id="ch10" data-title="Vegas">
+  <div class="chapno">CHAPTER 10</div>
+  <h2>Could it have made money?</h2>
+  <div class="col">
+    <p>A betting price is a probability in disguise, plus the bookmaker's cut. Try it:</p>
+  </div>
+  <div class="demo" id="demo-vig"></div>
+  <div class="col">
+    <p>I then ran the most honest test I could: bet whichever side my model thinks is underpriced, using the <b>closing</b> line (the sharpest one), across the whole holdout. I chose the settings on the development years first and looked at the holdout once.</p>
+  </div>
+  <div class="demo" id="demo-bets"></div>
+  <div class="found col"><b class="k">What I found</b>Every version lost money, about 9% of each stake on average, and staking by the <span class="term" data-t="kelly">Kelly</span> rule wiped out the bankroll. Betting every favorite also loses (the bookmaker's cut), and the model's picks aren't statistically different from that. A formal check, the <span class="term" data-t="dsr">Deflated Sharpe Ratio</span>, comes out at 0.00: no evidence of skill after accounting for how many strategies I tried.</div>
+  <div class="caution col"><b class="k">Research, not advice</b>This is a statistics exercise about forecast quality. Nothing here is betting or financial advice.</div>
+</section>
+
+<!-- ======================= 11 ======================= -->
+<section class="chapter reveal" id="ch11" data-title="37 ideas">
+  <div class="chapno">CHAPTER 11</div>
+  <h2>Thirty-seven ideas, one survivor</h2>
+  <div class="col">
+    <p>I tried lots of ideas: rest days, bye weeks, injuries, game-day inactives, garbage-time filtering, margin models, recency weighting… Each one gets a score: <i>how much did it change log loss, and how sure am I?</i> Negative means better.</p>
+    <p>But here's the trap: test enough ideas and some will look great by pure luck. Try the simulator first.</p>
+  </div>
+  <div class="demo" id="demo-hack"></div>
+  <div class="col"><p>That's why every experiment is logged in a <b>registry</b>, and the whole family is corrected for multiple testing (<span class="term" data-t="holm">Holm</span> and Benjamini–Hochberg). Here's the full list:</p></div>
+  <div class="demo" id="demo-registry"></div>
+  <div class="found col"><b class="k">What I found</b>Four ideas looked significant on their own, where luck alone would produce about two. Only one held up after correction: <b>the Kalman rating filter, with its memory across seasons</b>, which beat simple season-to-date EPA. I then replicated it on seasons that had no part in its design (below): same direction, smaller, and short of significance on its own. Everything else (rest, byes, neutral sites, injuries, pass/rush splits) failed to show a detectable effect. Negative results are results.</div>
+</section>
+
+<!-- ======================= 12 ======================= -->
+<section class="chapter reveal" id="ch12" data-title="Sample size">
+  <div class="chapno">CHAPTER 12</div>
+  <h2>Why “no effect” is often “can't tell”</h2>
+  <div class="col"><p>Game results are noisy, so detecting a small improvement takes a lot of games. This calculator shows the chance a test would catch a real improvement of a given size.</p></div>
+  <div class="demo" id="demo-power"></div>
+  <div class="plain col"><b class="k">In plain English</b>With 111 playoff games, only a huge improvement (about 0.027 log loss) would reliably show up. A realistic improvement of 0.002 would need around 70 seasons of games to confirm. That's why I say I <i>failed to detect</i> an effect rather than “proved there isn't one.”</div>
+</section>
+
+<!-- ======================= 13 ======================= -->
+<!-- ======================= 13 ======================= -->
+<section class="chapter reveal" id="ch13" data-title="Live test">
+  <div class="chapno">CHAPTER 13</div>
+  <h2>The forward test: predictions I can't edit</h2>
+  <div class="col">
+    <p>Backtests can be accidentally flattered. The only fully honest test is to write down predictions <i>before</i> the games and score them afterward. Every week during the 2026 season the model logs its picks to a public <b>ledger</b>. Each row contains a fingerprint of the previous row (a <span class="term" data-t="hash">hash</span> chain), so quietly changing history is impossible without breaking every later row.</p>
+  </div>
+  <div class="demo" id="demo-ledger"></div>
+  <div class="demo" id="demo-title"></div>
+</section>
+
+<!-- ======================= 14 ======================= -->
+<section class="chapter reveal" id="ch14" data-title="Lessons">
+  <div class="chapno">CHAPTER 14</div>
+  <h2>What I learned</h2>
+  <div class="grid2" id="lessons"></div>
+  <h3 style="margin-top:34px">Limits and honest caveats</h3>
+  <ul class="col">
+    <li>The holdout (2,494 games, only 111 in the playoffs) can detect only fairly large improvements; small real effects may hide inside the noise.</li>
+    <li>I compare to <i>closing</i> lines, the market's final and most informed price. Earlier lines may be less efficient; I did not test that.</li>
+    <li>The holdout was examined for every idea I tried, so it is not sealed. Hyperparameters were tuned on 2011–2016 only, results are corrected for multiple looks, and a few diagnostics (for example the recency-weighting test) are labeled “post hoc.”</li>
+    <li>The forward test has only a handful of games so far. Early numbers are noise.</li>
+  </ul>
+  <h3 style="margin-top:34px">Glossary</h3>
+  <div class="grid2" id="glossary"></div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>Beating the Bookie?</b> An open research project. Code, tests and the full method write-up are in the <a class="repo" data-path="" href="#">GitHub repository</a>. Built from <code id="foot-sha"></code> on <span id="foot-date"></span>. Data: <a href="https://github.com/nflverse">nflverse</a> (play-by-play, schedules, injuries, contracts). Betting lines are from nflverse's schedule files and are used for comparison only.</p>
+    <p>Not betting or financial advice. I developed this with the help of an AI coding assistant (Claude); I am responsible for the design decisions and conclusions, and all results are reproducible from the code.</p>
+  </div>
+</footer>
+
+<noscript><div class="wrap"><div class="caution"><b class="k">JavaScript needed</b>The interactive demos need JavaScript. The text above still tells the story.</div></div></noscript>
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+// term key -> [display name, plain-English definition]
+export const GLOSSARY = {
+  "log-loss": ["Log loss", "A score for probability forecasts. Being right earns little penalty; being confidently wrong earns a huge one. Lower is better. Always saying 50/50 scores 0.693."],
+  "brier": ["Brier score", "Another forecast score: the average squared gap between your probability and what happened (1 or 0). Lower is better."],
+  "calibration": ["Calibration", "Whether your probabilities mean what they say: of all the games you called 70%, about 70 of every 100 should happen."],
+  "epa": ["EPA", "Expected Points Added: how many points a play added to (or took from) the drive, judged by down, distance and field position."],
+  "kalman": ["Kalman filter", "A method for tracking something you can't see directly (a team's true strength) from noisy measurements (game results), updating after each one."],
+  "walk-forward": ["Walk-forward validation", "Test the model one season at a time, letting it learn only from earlier seasons, exactly like real forecasting."],
+  "leakage": ["Leakage", "When information from the future sneaks into a prediction. It makes a model look brilliant in a test and useless in real life."],
+  "holdout": ["Holdout", "Data set aside to score the final model. It loses value every time you look at it to choose between ideas, so every look should be logged and corrected for."],
+  "vig": ["Vig (overround)", "The bookmaker's built-in margin. Prices on both sides of a game add up to more than 100%, so a bettor with no edge slowly loses."],
+  "ev": ["Expected value", "The average profit per dollar bet, if your probability is right."],
+  "kelly": ["Kelly criterion", "A staking rule that maximizes long-run growth if your probabilities are correct. If they're wrong, it can wipe you out."],
+  "dsr": ["Deflated Sharpe Ratio", "A check on a strategy's risk-adjusted return that discounts for how many strategies you tried before finding it."],
+  "holm": ["Holm / Benjamini–Hochberg", "Procedures that raise the bar for 'significant' when you've run many tests, so luck doesn't masquerade as discovery."],
+  "p-value": ["p-value", "How surprising your result would be if nothing real were going on. Small means surprising, but not proof."],
+  "ci": ["Confidence interval", "A range of plausible values for the true effect. If it comfortably includes zero, I can't rule out 'no effect'."],
+  "bootstrap": ["Bootstrap", "Re-sample your own data thousands of times to see how much your result would wobble by chance."],
+  "power": ["Statistical power", "The chance a test would catch a real effect of a given size. Low power means 'no result' really means 'couldn't tell'."],
+  "hash": ["Hash chain", "Each ledger row stores a fingerprint of the previous row. Changing anything old changes its fingerprint and breaks every row after it."],
+  "persistence": ["Persistence", "How much of a player's or team's number this year carries over to next year. High persistence = a stable skill."],
+};

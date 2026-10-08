@@ -1,0 +1,26 @@
+project:
+  type: default
+  output-dir: _output
+
+bibliography: references.bib
+
+format:
+  # Typst ships inside Quarto, so the PDF needs no LaTeX install
+  typst:
+    papersize: us-letter
+    margin:
+      x: 1in
+      y: 1in
+    fontsize: 11pt
+    number-sections: true
+    toc: true
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    embed-resources: true
+    smooth-scroll: true
+
+execute:
+  echo: false

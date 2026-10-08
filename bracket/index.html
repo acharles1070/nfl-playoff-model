@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NFL Playoff Bracket Projection</title>
+<meta name="description" content="A live, self-updating projection of the NFL playoff bracket: every team's chance at each seed, the bracket the favorites would produce, and title odds. Refreshed daily.">
+<link rel="stylesheet" href="assets/bracket.css">
+<script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topinner">
+    <a class="brand" href="./">🏈 <b>Playoff Bracket</b></a>
+    <nav class="links">
+      <a href="../">How it works</a>
+      <a class="repo" href="https://github.com/acharles1070/nfl-playoff-model">Code</a>
+    </nav>
+    <button class="iconbtn" id="theme" title="Toggle light / dark" aria-label="Toggle light or dark theme">◐</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow" id="eyebrow">NFL playoff bracket projection</div>
+    <h1 id="title">Loading…</h1>
+    <div class="status" id="status"></div>
+    <p class="lede" id="lede"></p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <nav class="tabs" id="tabs" aria-label="Views">
+    <button data-v="bracket" class="on">Bracket</button>
+    <button data-v="seeds">Seed odds</button>
+    <button data-v="teams">All 32 teams</button>
+    <button data-v="about">About</button>
+  </nav>
+
+  <section id="view-bracket" class="view on">
+    <div class="note" id="bracket-note"></div>
+    <div class="bracket" id="bracket"></div>
+    <div class="legend">
+      <span><i class="sw proj"></i> projected (the favorite advances)</span>
+      <span><i class="sw sched"></i> scheduled</span>
+      <span><i class="sw final"></i> final</span>
+      <span>⚡ upset (the model's underdog won)</span>
+    </div>
+  </section>
+
+  <section id="view-seeds" class="view">
+    <p class="sub">Chance each team finishes with each playoff seed, from 65,536 simulated seasons. “Out” is the chance of missing the playoffs. Darker = likelier. The bracket uses the lineup that maximizes the expected number of correct seeds.</p>
+    <div class="grid2" id="seed-tables"></div>
+  </section>
+
+  <section id="view-teams" class="view">
+    <p class="sub">Click a column to sort. Probabilities are simulated; “change” is the move in title odds since last week's projection.</p>
+    <div class="scroll"><table id="teams-table"></table></div>
+  </section>
+
+  <section id="view-about" class="view">
+    <div class="col about">
+      <h2>How this works</h2>
+      <p>I built a forecasting model for NFL games from play-by-play data. Each team has a strength rating (offense, defense and quarterback) that updates after every game with a <b>Kalman filter</b>. A logistic model turns a rating gap, plus home field, into a win probability for any matchup.</p>
+      <p>To get a bracket I play out the rest of the season 65,536 times, with every team's strength nudged by a random amount sized by how unsure the rating is. That gives every team's chance at each seed, then the playoffs are simulated from those seedings. Once the real Wild Card matchups exist, the field is the real one: finished games show their scores, and the odds are re-simulated from the teams still alive.</p>
+      <h3>Reading the bracket</h3>
+      <ul>
+        <li><b>The drawn bracket advances the favorite in every game.</b> That is not the same as the team most likely to win it all: a team can be favored in every game and still be unlikely to win four in a row. The title odds in the cards and the table are the right numbers for “who wins it.”</li>
+        <li><b>Before the playoffs exist, the field is a projection.</b> It is the lineup that matches the simulated seed odds best, and it will change.</li>
+        <li><b>Every percentage is the model's, not the market's.</b> The model does not use betting lines, and in my tests it does not beat the closing line.</li>
+      </ul>
+      <h3>How it updates</h3>
+      <p>A scheduled job on GitHub downloads the latest nflverse data, rebuilds the ratings and re-runs the simulation every morning from September through February, then republishes this page. The numbers for the regular season match the title odds I log to a tamper-evident ledger each week.</p>
+      <h3>Limits</h3>
+      <p>The NFL's full tiebreaker rules are approximated (ties in record are broken at random inside the simulation and by records and point differential when building a real field). There are only 13 playoff games a year, so the model's track record on brackets is tiny: see the <a href="../">walkthrough</a> for a replay of the January 2026 playoffs and how it did.</p>
+      <p class="fine">Research project, not betting or financial advice. Data: <a href="https://github.com/nflverse">nflverse</a>. I developed this with the help of an AI coding assistant (Claude); I am responsible for the design and conclusions.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap pagefoot"><span id="foot"></span></footer>
+<noscript><div class="wrap"><div class="note">This page needs JavaScript to draw the bracket.</div></div></noscript>
+<script src="assets/bracket.js"></script>
+</body>
+</html>

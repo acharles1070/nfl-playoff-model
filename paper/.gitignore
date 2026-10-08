@@ -1,0 +1,13 @@
+_output/
+.quarto/
+*_files/
+/*.html
+/paper.pdf
+
+/.quarto/
+**/*.quarto_ipynb
+*.typ
+*.log
+*.tex
+*.aux
+*.toc

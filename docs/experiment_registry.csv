@@ -1,0 +1,38 @@
+id,area,experiment,window,delta_log_loss,ci_low,ci_high,p_raw,source,p_holm,q_bh,significant_raw,survives_holm,survives_bh
+E01,ratings,Kalman team ratings vs season-to-date EPA,2017-25,-0.02001,-0.02836,-0.01174,0.0,computed live below,9e-05,9e-05,True,True,True
+E02,QB,QB layer vs no-QB ratings (all games),2017-25,-0.0037,-0.0076,0.0003,0.06637,ratings_experiment,1.0,0.47935,False,False,False
+E03,QB,"QB layer, games where a starter changed",2017-25,-0.0132,-0.0246,-0.0016,0.02447,ratings_experiment,0.85629,0.30174,True,False,False
+E04,QB,"QB layer, regular season only",2017-25,-0.0044,-0.0084,-0.0003,0.03322,ratings_experiment,1.0,0.30731,True,False,False
+E05,QB,"QB layer, postseason only",2017-25,0.0108,-0.0011,0.0229,0.07773,ratings_experiment,1.0,0.47935,False,False,False
+E06,history,Train from 2000 vs from 2010,2017-25,0.0004,-0.0008,0.0016,0.51354,history extension,1.0,0.86368,False,False,False
+E07,tuning,Re-tune filter on 2002-2016 vs 2011-2016 values,2017-25,-0.0005,-0.002,0.001,0.51354,ratings re-tune,1.0,0.86368,False,False,False
+E08,model form,Margin regression + normal CDF vs logistic,2017-25,-0.0008,-0.0022,0.0004,0.22776,game_model_experiment,1.0,0.86368,False,False,False
+E09,model form,Heteroscedastic (uncertainty-widened) margin model,2017-25,-0.0003,-0.0024,0.0017,0.77424,game_model_experiment,1.0,0.95721,False,False,False
+E10,model form,Margin Kalman rating added,2017-25,-0.0002,-0.0028,0.0024,0.88016,margin_experiment,1.0,0.95721,False,False,False
+E11,model form,Pass/rush split filters,2017-25,0.0,-0.0023,0.0022,1.0,pass_rush_experiment,1.0,1.0,False,False,False
+E12,context,+ rest difference,2017-25,-0.0001,-0.0013,0.0012,0.8754,context_experiment,1.0,0.95721,False,False,False
+E13,context,+ bye flags,2017-25,-0.0001,-0.0019,0.0018,0.91563,context_experiment,1.0,0.95721,False,False,False
+E14,context,+ neutral site,2017-25,0.0007,-0.0011,0.0025,0.44593,context_experiment,1.0,0.86368,False,False,False
+E15,context,+ bye flags + neutral,2017-25,0.0006,-0.0018,0.0031,0.63123,context_experiment,1.0,0.89829,False,False,False
+E16,context,+ rest + bye + neutral,2017-25,0.0007,-0.0017,0.0032,0.57548,context_experiment,1.0,0.89829,False,False,False
+E17,context,+ all context features,2017-25,0.0011,-0.0016,0.0037,0.41588,context_experiment,1.0,0.86368,False,False,False
+E18,garbage time,"Competitive plays only, wp 10-90%",2017-25,0.0026,-0.0021,0.0073,0.27825,garbage_time_experiment,1.0,0.86368,False,False,False
+E19,garbage time,"Competitive plays only, wp 5-95%",2017-25,0.002,-0.0018,0.0058,0.30227,garbage_time_experiment,1.0,0.86368,False,False,False
+E20,garbage time,Leverage-weighted plays,2017-25,0.0026,-0.0018,0.007,0.24679,garbage_time_experiment,1.0,0.86368,False,False,False
+E21,injuries,"Injury-report burden, totals",2017-25,-0.0014,-0.0032,0.0005,0.13801,injury_experiment,1.0,0.72948,False,False,False
+E22,injuries,"Injury-report burden, by position group",2017-25,-0.0011,-0.004,0.002,0.47235,injury_experiment,1.0,0.86368,False,False,False
+E23,injuries,"Injury burden, OL only",2017-25,0.0002,-0.0003,0.0006,0.38369,injury_experiment,1.0,0.86368,False,False,False
+E24,injuries,"Injury burden, DB only",2017-25,-0.0004,-0.0016,0.0007,0.4954,injury_experiment,1.0,0.86368,False,False,False
+E25,injuries,Two-stage EPA-residual injury adjustment,2017-25,-0.0018,-0.0045,0.0009,0.19133,injury_two_stage,1.0,0.86368,False,False,False
+E26,roster,Injured-reserve burden,2014-25,0.0011,-0.0031,0.0052,0.6034,roster_experiment,1.0,0.89829,False,False,False
+E27,roster,Game-day inactive burden,2014-25,-0.0018,-0.0034,-0.0003,0.02284,roster_experiment,0.82218,0.30174,True,False,False
+E28,roster,IR + inactives,2014-25,-0.0005,-0.0051,0.004,0.82947,roster_experiment,1.0,0.95721,False,False,False
+E29,roster,IR + inactives + report,2014-25,0.0002,-0.0044,0.0047,0.93134,roster_experiment,1.0,0.95721,False,False,False
+E30,roster,IR + inactives by position group,2014-25,0.0027,-0.0026,0.0077,0.30415,roster_experiment,1.0,0.86368,False,False,False
+E31,roster,Injury-report burden (pooled 2014-25),2014-25,-0.0006,-0.0024,0.0012,0.51354,roster_experiment,1.0,0.86368,False,False,False
+E32,market,Calibrated market vs raw market,2017-25,-0.0001,-0.001,0.0008,0.8276,market_models,1.0,0.95721,False,False,False
+E33,market,Stacked market + my model vs raw market,2017-25,0.0002,-0.0008,0.0012,0.69506,market_models,1.0,0.95249,False,False,False
+E35,home edge,"Recency-weighted training, half-life 8 seasons (post hoc)",2017-25,-0.0003,-0.0011,0.0005,0.46234,hfa_experiment,1.0,0.86368,False,False,False
+E36,home edge,"Recency-weighted training, half-life 5 seasons (post hoc)",2017-25,-0.0003,-0.0015,0.0009,0.62413,hfa_experiment,1.0,0.89829,False,False,False
+E37,home edge,"Recency-weighted training, half-life 3 seasons (post hoc)",2017-25,-0.0001,-0.0019,0.0017,0.91329,hfa_experiment,1.0,0.95721,False,False,False
+E38,home edge,"Recency-weighted training, half-life 2 seasons (post hoc)",2017-25,0.0002,-0.0021,0.0025,0.86467,hfa_experiment,1.0,0.95721,False,False,False

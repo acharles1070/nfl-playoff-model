@@ -1,0 +1,26 @@
+# Direct dependencies, pinned to the versions the project was developed with.
+# Rebuild the environment with:
+#   python3.14 -m venv .venv && .venv/bin/pip install -r requirements.txt
+
+# Data
+nflreadpy==0.1.5
+polars==1.44.2
+pyarrow==25.0.1
+pandas==3.0.6
+numpy==2.5.3
+PyYAML==6.0.3
+requests==2.34.2
+
+# Modeling
+scikit-learn==1.9.1
+scipy==1.18.1
+# Optional: needs the OpenMP runtime on macOS (`brew install libomp`). Not used by src/ today;
+# scikit-learn's HistGradientBoosting covers tree models without it.
+# xgboost==3.4.1
+statsmodels==0.15.0
+
+# Figures
+matplotlib==3.11.2
+
+# Testing
+pytest

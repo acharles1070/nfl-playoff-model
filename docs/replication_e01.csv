@@ -1,0 +1,4 @@
+window,seasons,games,delta_log_loss,ci_low,ci_high,per_season_better,n_seasons
+primary: 2003-2009 (untouched by design and tuning),2003-2009,1869,-0.00761,-0.01585,0.00042,4,7
+secondary: dev window 2002-2016,2002-2016,4005,-0.01465,-0.02035,-0.00888,8,15
+secondary: holdout 2017-2025 (= E01),2017-2025,2494,-0.01752,-0.02525,-0.00988,4,9

@@ -1,0 +1,46 @@
+project:
+  name: nfl-playoff-model
+  random_seed: 42
+
+seasons:
+  # Historical seasons used for training/backtesting. nflverse has play-by-play
+  # (with EPA) and spreads back to 1999. Injury reports start 2009 (usable
+  # with snap counts from 2013), so injury features simply do not exist before
+  # then. 1999 is a cold start for the rating filter.
+  start: 1999
+  end: 2026            # includes the season in progress
+
+  # Evaluation and the frozen holdout stop here. The in-progress season is a
+  # forward test only: it is scored through the prediction ledger, never
+  # mixed into backtests.
+  last_complete: 2025
+  live: 2026
+
+  # Never hard-code "week >= 18" as playoffs.
+  postseason_game_types:
+    - WC
+    - DIV
+    - CON
+    - SB
+
+paths:
+  raw: data/raw
+  interim: data/interim
+  processed: data/processed
+  models: models
+  outputs: outputs
+
+  injuries: data/raw/injuries
+  weather: data/raw/weather
+
+model:
+  target: home_win
+  validation: leave_one_season_out
+  probability_clip: 0.001
+
+features:
+  use_epa: true
+  use_rest: true
+  use_injuries: true
+  use_weather: true
+  use_home_field: true

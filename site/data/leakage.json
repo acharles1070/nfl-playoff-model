@@ -1,0 +1,1 @@
+{"games":2383,"rows":[{"label":"Peeking: full-season EPA","log_loss":0.579752274525358,"kind":"peek"},{"label":"Honest: season-to-date EPA","log_loss":0.6550807929555046,"kind":"honest"},{"label":"Honest: Kalman + QB","log_loss":0.6299486261130647,"kind":"honest"},{"label":"Betting market","log_loss":0.6065017395692143,"kind":"market"}]}

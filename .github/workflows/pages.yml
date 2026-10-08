@@ -1,0 +1,83 @@
+name: site
+
+# Publishes two static sites to GitHub Pages from one deployment:
+#   /          the explainer (site/)
+#   /bracket/  the live playoff bracket (bracket/), whose data is regenerated here from fresh nflverse data
+#
+# It runs on every push that touches the sites or the model code, manually, and every morning from September
+# through February so the bracket updates itself. If the refresh fails, the committed snapshot in
+# bracket/data/bracket.json is deployed instead and the run shows a warning.
+#
+# One-time setup: repository Settings -> Pages -> Source: "GitHub Actions".
+# Each August: set seasons.live (and seasons.end) in config.yaml to the new season, or the bracket keeps showing the last one.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "bracket/**"
+      - "src/**"
+      - "config.yaml"
+      - "requirements.txt"
+      - ".github/workflows/pages.yml"
+  schedule:
+    - cron: "30 9 * 1,2,9,10,11,12 *"      # 09:30 UTC daily, September to February
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      # Play-by-play for finished seasons is downloaded once and reused; the live season is always re-downloaded.
+      - name: Restore the nflverse data cache
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: nflverse-${{ github.run_id }}
+          restore-keys: nflverse-
+
+      - name: Refresh the live bracket
+        id: bracket
+        continue-on-error: true
+        run: |
+          python -m src.pipeline --stages schedules,epa,snapshots,matchups,opponent_adjusted,opponent_matchups,qb
+          python -m src.simulation.live_bracket --out bracket/data/bracket.json
+
+      - name: Warn if the refresh failed
+        if: steps.bracket.outcome == 'failure'
+        run: echo "::warning::The live bracket refresh failed; the committed snapshot is being deployed instead."
+
+      - name: Assemble the site
+        run: |
+          mkdir _site
+          cp -R site/. _site/
+          mkdir _site/bracket
+          cp -R bracket/. _site/bracket/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
