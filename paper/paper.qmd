@@ -3,11 +3,11 @@ title: "Beating the Bookie? Honest Evaluation of a Fundamentals-Only NFL Forecas
 author: "Aidan Charles"
 date: today
 date-format: "MMMM D, YYYY"
+abstract: |
+  I build a leakage-controlled, fundamentals-only forecasting pipeline for NFL games and playoff outcomes, and spend most of the paper on how to tell whether it works. A Kalman filter on per-play expected points added (EPA), with a separate quarterback layer, feeds a logistic game model. Evaluated walk-forward on {{< var n_games >}} held-out games (2017--2025, {{< var n_post >}} of them postseason) it scores a log loss of {{< var ll_champ >}}, against {{< var ll_home >}} for home-field alone and {{< var ll_market >}} for the closing betting line; the {{< var gap >}} gap to the market is statistically clear (95% CI {{< var gap_lo >}} to {{< var gap_hi >}}). An encompassing regression finds no information in the model beyond the market, and betting the model's disagreements with closing moneylines loses {{< var roi >}}% per bet ({{< var bets_n >}} bets; 95% CI {{< var roi_lo >}}% to {{< var roi_hi >}}%). Of {{< var n_tests >}} out-of-sample comparisons, {{< var n_raw >}} are nominally significant where about {{< var exp_fp >}} would be expected by chance, and one, the Kalman rating filter with memory across seasons (versus season-to-date EPA), survives Holm and Benjamini--Hochberg correction on the holdout where it was found; on 2003--2009 seasons that had no part in its design it points the same way ({{< var rep_primary >}}) but does not reach significance on its own. I show how season-final features make an EPA model look better than the market (log loss {{< var ll_peek >}}), quantify what a 111-game postseason sample can and cannot detect, replay the model's projections for the January {{< var br_year >}} playoff bracket against what happened (it picked {{< var br_games_model >}} of {{< var br_n >}} winners, the closing line {{< var br_games_market >}}, and a standings baseline matched its projected field for most of the season), and describe a hash-chained forward-test ledger and a live, self-updating bracket that began with the 2026 season. The contribution is methodological: a worked example of the evaluation discipline needed to trust, or reject, a sports forecasting claim.
+
+  *Keywords:* forecasting, proper scoring rules, Kalman filter, multiple testing, market efficiency, American football.
 ---
-
-## Abstract {.unnumbered}
-
-I build a leakage-controlled, fundamentals-only forecasting pipeline for NFL games and playoff outcomes, and spend most of the paper on how to tell whether it works. A Kalman filter on per-play expected points added (EPA), with a separate quarterback layer, feeds a logistic game model. Evaluated walk-forward on {{< var n_games >}} held-out games (2017--2025, {{< var n_post >}} of them postseason) it scores a log loss of {{< var ll_champ >}}, against {{< var ll_home >}} for home-field alone and {{< var ll_market >}} for the closing betting line; the {{< var gap >}} gap to the market is statistically clear (95% CI {{< var gap_lo >}} to {{< var gap_hi >}}). An encompassing regression finds no information in the model beyond the market, and betting the model's disagreements with closing moneylines loses {{< var roi >}}% per bet ({{< var bets_n >}} bets; 95% CI {{< var roi_lo >}}% to {{< var roi_hi >}}%). Of {{< var n_tests >}} out-of-sample comparisons, {{< var n_raw >}} are nominally significant where about {{< var exp_fp >}} would be expected by chance, and one, the Kalman rating filter with memory across seasons (versus season-to-date EPA), survives Holm and Benjamini--Hochberg correction on the holdout where it was found; on 2003--2009 seasons that had no part in its design it points the same way ({{< var rep_primary >}}) but does not reach significance on its own. I show how season-final features make an EPA model look better than the market (log loss {{< var ll_peek >}}), quantify what a 111-game postseason sample can and cannot detect, replay the model's projections for the January {{< var br_year >}} playoff bracket against what happened (it picked {{< var br_games_model >}} of {{< var br_n >}} winners, the closing line {{< var br_games_market >}}, and a standings baseline matched its projected field for most of the season), and describe a hash-chained forward-test ledger and a live, self-updating bracket that began with the 2026 season. The contribution is methodological: a worked example of the evaluation discipline needed to trust, or reject, a sports forecasting claim.
 
 ## Introduction
 
@@ -38,21 +38,21 @@ The project began as a notebook whose headline accuracy turned out to be inflate
 
 ### Team and quarterback ratings {#sec-ratings}
 
-Each team carries two latent strengths in EPA-per-play units: an offense $O_t$ (everything except the quarterback) and a defense $D_t$ (EPA allowed above average, so lower is better); each quarterback $k$ carries a strength $Q_k$ that travels with him between teams. A game contributes two observations. For the home offense,
+Each team carries two latent strengths in EPA-per-play units: an offense $O_t$ (everything except the quarterback) and a defense $D_t$ (EPA allowed above average, so lower is better); each quarterback $k$ carries a strength $Q_k$ that travels with him between teams. A game contributes two observations. For the home offense (@eq-obs),
 $$
-y_h = \mu + O_h + \sum_k s_k Q_k + D_a + \varepsilon_h, \qquad \varepsilon_h \sim \mathcal N\!\left(0,\; \sigma^2 \tfrac{n_0}{n_h}\right),
-$$
+y_h = \mu + O_h + \sum_k s_k Q_k + D_a + \varepsilon_h, \qquad \varepsilon_h \sim \mathcal N\!\left(0,\; \sigma_{\mathrm{obs}}^{2}\,\frac{n_0}{n_h}\right),
+$$ {#eq-obs}
 where $s_k$ is quarterback $k$'s share of the team's dropbacks, $n_h$ the number of offensive plays and $n_0 = 62.7$ the league-average count; the away offense is symmetric. After each week the Kalman gain moves every state toward the observation in proportion to its prior uncertainty, which splits credit between team and quarterback and handles backups and trades correctly. Between games uncertainty drifts upward; between seasons states shrink toward the league mean, $x \leftarrow \lambda x$, and variances inflate, $P \leftarrow \lambda^2 P + q_{\text{season}}$, with separate carry-over $\lambda$ for offense (0.30), defense (0.70) and quarterbacks (0.85). Hyperparameters were tuned by coordinate descent on test seasons 2011--2016 only, on a very flat loss surface, and frozen before the 2017--2025 holdout was scored. A simplified one-dimensional version is illustrated in @fig-kalman.
 
-![A simplified Kalman filter on real 2025 game results for one team. Dots are single-game net EPA per play (offense minus defense allowed). The green line is the filter's belief going into each game, the band is $\pm 1$ posterior standard deviation, and the amber line is the full model's rating (offense, defense and quarterback, opponent-adjusted). The filter moves far less than a plain running average (dashed) early in the season.](figures/kalman.png){#fig-kalman width=85%}
+![A simplified Kalman filter on real 2025 game results for one team. Dots are single-game net EPA per play (offense minus defense allowed). The green line is the filter's belief going into each game, the band is $\pm 1$ posterior standard deviation, and the amber line is the full model's rating (offense, defense and quarterback, opponent-adjusted). The filter moves far less than a plain running average (dashed) early in the season.](figures/kalman){#fig-kalman width=85%}
 
 ### Game model
 
-The home-win probability is a logistic regression on two rating differences,
+The home-win probability is a logistic regression on two rating differences (@eq-game),
 $$
-\Pr(\text{home win}) = \sigma\!\big(\beta_0 + \beta_1 \Delta(O{+}Q) + \beta_2 \Delta D\big),
-$$
-where $\Delta(O{+}Q)$ is home minus away offense-plus-quarterback strength and $\Delta D$ is away minus home defensive allowance. The intercept is the home-field term. The model is refit for each test season on earlier seasons only.
+\Pr(\text{home win}) = \operatorname{logistic}\!\big(\beta_0 + \beta_1 \Delta(O{+}Q) + \beta_2 \Delta D\big),
+$$ {#eq-game}
+where $\operatorname{logistic}(z) = 1/(1+e^{-z})$, $\Delta(O{+}Q)$ is home minus away offense-plus-quarterback strength and $\Delta D$ is away minus home defensive allowance. The intercept is the home-field term. The model is refit for each test season on earlier seasons only.
 
 ### Evaluation protocol {#sec-protocol}
 
@@ -60,19 +60,23 @@ where $\Delta(O{+}Q)$ is home minus away offense-plus-quarterback strength and $
 
 ### Postseason and season simulation {#sec-simmethods}
 
-Each simulated season draws a latent strength shock $\epsilon_t \sim \mathcal N(0, \tau_t^2)$ for every team on the probit scale, shared by all of that team's games. The variance $\tau_t^2$ comes from the rating filter's own posterior variance. A game between $i$ and $j$ is won by $i$ with probability
+Each simulated season draws a latent strength shock $\eta_t \sim \mathcal N(0, \tau_t^2)$ for every team on the probit scale, shared by all of that team's games. The variance $\tau_t^2$ comes from the rating filter's own posterior variance. A game between $i$ and $j$ is won by $i$ with probability (@eq-shock)
 $$
-p(\epsilon) = \Phi\!\left(\frac{m_{ij} + \epsilon_i - \epsilon_j}{s_{ij}}\right), \qquad s_{ij}^2 = 1 - \tau_i^2 - \tau_j^2,
-$$
-where $m_{ij} = \Phi^{-1}(p_{ij})$ is the probit index of the fitted game model's single-game probability. By construction, averaging over the shocks returns $p_{ij}$ (marginal preservation), so single-game forecasts stay calibrated while a team's fortunes become correlated across rounds. Given the shocks the bracket is solved *exactly*: every combination of game outcomes with NFL reseeding is enumerated and collapsed by surviving-team set (Rao--Blackwellization), so the only Monte Carlo noise is in the shocks, reduced with scrambled Sobol points and antithetic pairs. A vectorized season simulator (65,536 seasons, random tiebreaks) produces playoff, division and title probabilities. Seeds for past brackets are reconstructed from schedules and validated against 17 real brackets.
+p_{ij}(\eta) = \Phi\!\left(\frac{m_{ij} + \eta_i - \eta_j}{s_{ij}}\right), \qquad s_{ij}^2 = 1 - \tau_i^2 - \tau_j^2,
+$$ {#eq-shock}
+where $\Phi$ is the standard normal distribution function and $m_{ij} = \Phi^{-1}(\bar p_{ij})$ is the probit index of the fitted game model's single-game probability $\bar p_{ij}$. By construction, averaging $p_{ij}(\eta)$ over the shocks returns $\bar p_{ij}$ (marginal preservation), so single-game forecasts stay calibrated while a team's fortunes become correlated across rounds. Given the shocks the bracket is solved *exactly*: every combination of game outcomes with NFL reseeding is enumerated and collapsed by surviving-team set (Rao--Blackwellization), so the only Monte Carlo noise is in the shocks, reduced with scrambled Sobol points and antithetic pairs. A vectorized season simulator (65,536 seasons, random tiebreaks) produces playoff, division and title probabilities. Seeds for past brackets are reconstructed from schedules and validated against 17 real brackets.
 
 ### Multiple testing and power {#sec-multi}
 
-Every out-of-sample comparison run in the project is logged in a registry with its effect (change in paired log loss) and interval. I recover a $p$-value from each interval under a normal approximation and control the family-wise error rate with Holm's procedure [@holm1979] and the false-discovery rate with Benjamini and Hochberg's [@benjamini1995]. For power, the standard deviation of per-game log-loss differences between two similar models is $\hat\sigma =$ {{< var sigma >}}, so a two-sided 5% test with 80% power over $n$ games detects a true improvement of about $2.8\,\hat\sigma/\sqrt n$.
+Every out-of-sample comparison run in the project is logged in a registry with its effect (change in paired log loss) and interval. I recover a $p$-value from each interval under a normal approximation and control the family-wise error rate with Holm's procedure [@holm1979] and the false-discovery rate with Benjamini and Hochberg's [@benjamini1995]. For power, the standard deviation of per-game log-loss differences between two similar models is $\hat s_\Delta =$ {{< var sigma >}}, so a two-sided 5% test with 80% power over $n$ games detects a true improvement of about $2.8\,\hat s_\Delta/\sqrt n$.
 
 ### Trading simulation {#sec-tradingmethods}
 
-For each game the simulated bettor takes the side with the larger expected value $\text{EV} = p(d-1) - (1-p)$ at decimal odds $d$ whenever EV exceeds a threshold. Staking is either one unit (flat) or quarter-Kelly capped at 5% of the bankroll [@kelly1956]. Prices are the real two-sided closing moneylines, with an average overround of {{< var overround >}}%. The threshold is chosen on 2007--2016 and the holdout 2017--2025 is scored once. I report return per bet with a bootstrap interval, naive baselines that isolate the effect of the vig, the Sharpe ratio, and the Deflated Sharpe Ratio [@baileylopezdeprado2014] over all {{< var n_trials >}} strategy variants tried.
+For each game the simulated bettor takes the side with the larger expected value, for win probability $\pi$ and decimal odds $d$,
+$$
+\mathrm{EV} = \pi\,(d-1) - (1-\pi),
+$$ {#eq-ev}
+whenever EV exceeds a threshold. Staking is either one unit (flat) or quarter-Kelly capped at 5% of the bankroll [@kelly1956]. Prices are the real two-sided closing moneylines, with an average overround of {{< var overround >}}%. The threshold is chosen on 2007--2016 and the holdout 2017--2025 is scored once. I report return per bet with a bootstrap interval, naive baselines that isolate the effect of the vig, the Sharpe ratio, and the Deflated Sharpe Ratio [@baileylopezdeprado2014] over all {{< var n_trials >}} strategy variants tried.
 
 ## Results
 
@@ -84,23 +88,23 @@ For each game the simulated bettor takes the side with the larger expected value
 
 : Holdout 2017--2025, common population of {{< var n_games >}} games with a closing line. Gap = model minus market log loss with a 95% paired-bootstrap interval. {#tbl-scorecard}
 
-![Log loss by model with 95% intervals for each model's gap to the market (dashed line).](figures/scorecard.png){#fig-scorecard width=85%}
+![Log loss by model with 95% intervals for each model's gap to the market (dashed line).](figures/scorecard){#fig-scorecard width=85%}
 
 The champion model picks the winner {{< var acc_champ >}}% of the time versus {{< var acc_market >}}% for the market and {{< var acc_home >}}% for always choosing the home team. Accuracy ignores confidence, which is why log loss is the primary metric.
 
 ### What the market knows {#sec-market}
 
-In an encompassing regression of outcomes on the logits of the market and model probabilities, the model's coefficient is {{< var enc_coef >}} (95% CI {{< var enc_lo >}} to {{< var enc_hi >}}, $p =$ {{< var enc_p >}}): the model adds no detectable information beyond the market. The two forecasts are strongly correlated ({{< var enc_corr >}} on the logit scale), so individual coefficients in the joint fit are not separately interpretable; I therefore also report each forecaster's own calibration slope on the holdout: {{< var slope_model >}} for the model and {{< var slope_market >}} for the market (1 is perfect). @fig-calibration shows both are close to calibrated. The market's advantage is therefore not miscalibration but sharper, better-informed probabilities.
+In an encompassing regression of outcomes on the logits of the market and model probabilities, the model's coefficient is {{< var enc_coef >}} (95% CI {{< var enc_lo >}} to {{< var enc_hi >}}, $p =$&nbsp;{{< var enc_p >}}): the model adds no detectable information beyond the market. The two forecasts are strongly correlated ({{< var enc_corr >}} on the logit scale), so individual coefficients in the joint fit are not separately interpretable; I therefore also report each forecaster's own calibration slope on the holdout: {{< var slope_model >}} for the model and {{< var slope_market >}} for the market (1 is perfect). @fig-calibration shows both are close to calibrated. The market's advantage is therefore not miscalibration but sharper, better-informed probabilities.
 
-![Reliability of model and market probabilities on the holdout. Whiskers are 95% binomial intervals.](figures/calibration.png){#fig-calibration width=55%}
+![Reliability of model and market probabilities on the holdout. Whiskers are 95% binomial intervals.](figures/calibration){#fig-calibration width=55%}
 
 ### Ideas tested, and the multiple-testing correction {#sec-registry}
 
-@fig-registry lists all {{< var n_tests >}} comparisons: Kalman versus season-to-date ratings, the quarterback layer and its cuts, margin and heteroscedastic models, rest/bye/neutral-site features, garbage-time and leverage filtering, injury burden (report-based, injured-reserve and game-day inactives), recency-weighted training and market-calibration variants. One further comparison that used a licensed third-party dataset cannot be published; it showed no detectable effect and is not counted here. {{< var n_raw >}} are nominally significant at 5%, where chance alone would give about {{< var exp_fp >}}; **one** survives Holm and Benjamini--Hochberg: cross-season Kalman ratings versus season-to-date EPA ({{< var e01 >}}).
+@fig-registry lists all {{< var n_tests >}} comparisons: Kalman versus season-to-date ratings, the quarterback layer and its cuts, margin and heteroscedastic models, rest/bye/neutral-site features, garbage-time and leverage filtering, injury burden (report-based, injured-reserve and game-day inactives), recency-weighted training and market-calibration variants. One further comparison that used a licensed third-party dataset cannot be published; it showed no detectable effect and is not counted here. Of these, {{< var n_raw >}} are nominally significant at 5%, where chance alone would give about {{< var exp_fp >}}; **one** survives Holm and Benjamini--Hochberg: cross-season Kalman ratings versus season-to-date EPA ({{< var e01 >}}).
 
-![Experiment registry: change in log loss for each comparison with 95% intervals. Green = survives Holm and Benjamini--Hochberg; amber = nominally significant only; grey = no detectable effect. Experiments E35--E38 were motivated by looking at holdout diagnostics and are flagged *post hoc*.](figures/registry.png){#fig-registry width=95%}
+![Experiment registry: change in log loss for each comparison with 95% intervals. Green = survives Holm and Benjamini--Hochberg; amber = nominally significant only; grey = no detectable effect. Experiments E35--E38 were motivated by looking at holdout diagnostics and are flagged *post hoc*.](figures/registry){#fig-registry width=95%}
 
-Three results deserve comment. First, the **quarterback layer** looked like a success (all games {{< var e02 >}}; games where a starter changed {{< var e03 >}}, $p =$ {{< var e03_p >}}; regular season only {{< var e04 >}}) but does not survive correction, and in the 111 postseason games it points the wrong way ({{< var e05 >}}). Second, **injury information** is weak: the report-based burden gives {{< var e21 >}} and a two-stage EPA-residual adjustment {{< var e25 >}}, neither significant; game-day inactives were nominally significant ({{< var e27 >}}, $p =$ {{< var e27_p >}}) but do not survive correction and close only a small share of the gap to the market. Third, **margin-based and heteroscedastic models** (for example {{< var e08 >}}) add nothing over the logistic model.
+Three results deserve comment. First, the **quarterback layer** looked like a success (all games {{< var e02 >}}; games where a starter changed {{< var e03 >}}, $p =$&nbsp;{{< var e03_p >}}; regular season only {{< var e04 >}}) but does not survive correction, and in the 111 postseason games it points the wrong way ({{< var e05 >}}). Second, **injury information** is weak: the report-based burden gives {{< var e21 >}} and a two-stage EPA-residual adjustment {{< var e25 >}}, neither significant; game-day inactives were nominally significant ({{< var e27 >}}, $p =$&nbsp;{{< var e27_p >}}) but do not survive correction and close only a small share of the gap to the market. Third, **margin-based and heteroscedastic models** (for example {{< var e08 >}}) add nothing over the logistic model.
 
 ### Does the survivor replicate? {#sec-replication}
 
@@ -108,23 +112,23 @@ The Kalman filter was designed while 2017--2025 was the only test window, so its
 
 {{< include tables/replication.md >}}
 
-: Replication of E01 (Kalman ratings versus season-to-date EPA; negative favors Kalman). Primary check: 2003--2009. {#tbl-replication}
+: Replication of E01 (Kalman ratings versus season-to-date EPA; negative favors Kalman). The primary check is 2003--2009. "Seasons won" counts test seasons in which the Kalman ratings had the lower log loss. {#tbl-replication}
 
 ### What the sample can detect {#sec-power}
 
 With {{< var n_post >}} postseason games a reliable test detects only improvements above about {{< var mde_post >}} log loss; with {{< var n_games >}} holdout games, above {{< var mde_hold >}}. Confirming a true improvement of 0.005 would take about {{< var games_005 >}} games and one of 0.002 about {{< var games_002 >}} games (roughly {{< var seasons_002 >}} seasons) (@fig-power). Many "no effect" results above are therefore best read as *no detectable effect*.
 
-![Power of a paired test as a function of the number of games, for several true improvements.](figures/power.png){#fig-power width=65%}
+![Power of a paired test as a function of the number of games, for several true improvements.](figures/power){#fig-power width=65%}
 
 ### Look-ahead leakage {#sec-leakage}
 
 @fig-leakage reproduces the original design mistake using only public EPA data. Rating each team by its *full-season* net EPA per play and then "predicting" regular-season games from that season yields a log loss of {{< var ll_peek >}} on {{< var n_leak >}} holdout games, better than the closing market. The honest equivalent that uses only games before kickoff scores {{< var ll_std_epa_reg >}}, a difference of {{< var leak_gap >}} that reflects information from the future.
 
-![Peeking versus honest forecasting on {{< var n_leak >}} regular-season holdout games.](figures/leakage.png){#fig-leakage width=70%}
+![Peeking versus honest forecasting on {{< var n_leak >}} regular-season holdout games.](figures/leakage){#fig-leakage width=70%}
 
 ### Simulating the postseason and the title {#sec-simulation}
 
-Against historical futures prices, the bracket simulator is scored by $-\ln P(\text{actual winner})$ in each market and round (@tbl-bracket). The simulator trails the futures price in {{< var br_trail >}} of {{< var br_cells >}} market-and-round cells; the exception is the Super Bowl winner once the finalists are known, where the model is marginally better ($-0.019$), a single cell. With only nine seasons per cell I treat these as descriptive. The season simulator's title odds trail the market in every logged week by about 0.2 to 0.3 in log score ({{< var ti_diff >}} pooled, 95% CI {{< var ti_lo >}} to {{< var ti_hi >}}, resampling nine holdout seasons), a difference I cannot distinguish from zero (@tbl-title). Playoff-qualification probabilities agree with outcomes on average: mean predicted {{< var po_pred >}} versus observed {{< var po_obs >}} across {{< var po_n >}} team-snapshots.
+Against historical futures prices, the bracket simulator is scored by $-\ln \Pr(\text{actual winner})$ in each market and round (@tbl-bracket). The simulator trails the futures price in {{< var br_trail >}} of {{< var br_cells >}} market-and-round cells; the exception is the Super Bowl winner once the finalists are known, where the model is marginally better ($-0.019$), a single cell. With only nine seasons per cell I treat these as descriptive. The season simulator's title odds trail the market in every logged week by about 0.2 to 0.3 in log score ({{< var ti_diff >}} pooled, 95% CI {{< var ti_lo >}} to {{< var ti_hi >}}, resampling nine holdout seasons), a difference I cannot distinguish from zero (@tbl-title). Playoff-qualification probabilities agree with outcomes on average: mean predicted {{< var po_pred >}} versus observed {{< var po_obs >}} across {{< var po_n >}} team-snapshots.
 
 {{< include tables/bracket.md >}}
 
@@ -132,7 +136,7 @@ Against historical futures prices, the bracket simulator is scored by $-\ln P(\t
 
 {{< include tables/title.md >}}
 
-: Season-simulator title odds versus the market's price for the same week, scored on the champion ($-\ln P$; lower is better), 2017--2025. {#tbl-title}
+: Season-simulator title odds versus the market's price for the same week, scored on the champion ($-\ln \Pr$; lower is better), 2017--2025. The difference is model minus market, and its interval resamples the nine seasons. {#tbl-title}
 
 ### Replaying the January {{< var br_year >}} bracket {#sec-replay-bracket}
 
@@ -142,9 +146,9 @@ The playoffs held in January {{< var br_year >}} belonged to the {{< var br_seas
 
 {{< include tables/bracket_replay_field.md >}}
 
-: Projected field versus the real {{< var br_season >}} playoff field. "In field" counts the 14 eventual playoff teams that were projected (any seed); "exact seed" counts teams projected at their final seed. {#tbl-br-field}
+: Projected field versus the real {{< var br_season >}} playoff field. "In field" counts the 14 eventual playoff teams that were projected (any seed); "exact seed" counts teams projected at their final seed. Columns are the week before which the projection was made. {#tbl-br-field}
 
-![Left: how many of the 14 playoff teams each projection had in its field. Right: log loss of the model's playoff-qualification probabilities in {{< var br_season >}} against the average over {{< var br_nseasons >}} seasons, with the no-skill guess dotted.](figures/bracket_replay.png){#fig-br-replay width=95%}
+![Left: how many of the 14 playoff teams each projection had in its field. Right: log loss of the model's playoff-qualification probabilities in {{< var br_season >}} against the average over {{< var br_nseasons >}} seasons, with the no-skill guess dotted.](figures/bracket_replay){#fig-br-replay width=95%}
 
 *The bracket and the games.* Filled in before the Wild Card round, with the model's favorite in every game, the bracket got {{< var br_picks_model >}} of 13 winners right (a pick counts if that team wins in that round); always picking the higher seed got {{< var br_picks_seed >}}. It picked {{< var br_pick >}} to win the Super Bowl; {{< var br_champ >}} won, to whom it had given {{< var br_champ_odds >}}%, ranking {{< var br_champ_rank >}} of the 14 teams. With the real matchups known, the model picked {{< var br_games_model >}} of {{< var br_n >}} winners with log loss {{< var br_ll_model >}}, against {{< var br_games_market >}} and {{< var br_ll_market >}} for the closing line (@tbl-br-games).
 
@@ -158,7 +162,7 @@ Thirteen games are far too few to say anything about skill: a record of {{< var 
 
 No. Betting the model's larger-EV side against closing moneylines returns {{< var roi >}}% per bet over {{< var bets_n >}} holdout bets (95% CI {{< var roi_lo >}}% to {{< var roi_hi >}}%; {{< var units >}} units under flat staking). Betting every favorite returns {{< var roi_fav >}}% (CI {{< var roi_fav_lo >}}% to {{< var roi_fav_hi >}}%) and every home team {{< var roi_home >}}%, so naive strategies lose roughly three to five percent per bet. The model's picks, which are on the favorite only {{< var on_fav >}}% of the time, do {{< var vsfav >}} points worse than betting the favorite on the same games (95% CI {{< var vsfav_lo >}} to {{< var vsfav_hi >}}), a difference I cannot distinguish from zero: the claim is "no better than naive", not "reliably worse". Quarter-Kelly staking takes a bankroll of 100 to {{< var kelly_end >}}. The Sharpe ratio per bet is {{< var sharpe >}} and the Deflated Sharpe Ratio over {{< var n_trials >}} variants is {{< var dsr >}} (@fig-betting). The same rule returned roughly zero (about $-0.5$%, interval spanning zero) on the 2007--2016 development window; neither the 2019--2021 empty-stadium seasons nor a drifting home edge explains the gap (recency-weighted training changes holdout log loss by at most 0.0003).
 
-![Cumulative profit from betting the model's picks against closing moneylines (left, flat stakes) and bankroll under quarter-Kelly staking (right, log scale). Vertical lines separate seasons.](figures/betting.png){#fig-betting width=95%}
+![Cumulative profit from betting the model's picks against closing moneylines (left, flat stakes) and bankroll under quarter-Kelly staking (right, log scale). Vertical lines separate seasons.](figures/betting){#fig-betting width=95%}
 
 ### Forward test {#sec-forward}
 
@@ -176,4 +180,13 @@ Predictions for the 2026 season are written to an append-only CSV before kickoff
 
 ## Reproducibility and disclosures {.unnumbered}
 
-All code, tests and ledgers are in the project repository (<https://github.com/acharles1070/nfl-playoff-model>); every figure, table and number in this paper is generated from the pipeline's outputs (`python -m src.simulation.bracket_replay && python -m src.report.site_data && python -m src.report.paper_assets`; the live bracket is `python -m src.simulation.live_bracket`, built from commit `{{< var sha >}}` on {{< var built >}}). The pipeline rebuilds in about 15 seconds and ships with an automated test suite, including a perturbation test for every feature builder. I developed this work with the assistance of an AI coding assistant (Claude); I am responsible for the design decisions and conclusions, and all results are reproducible from the code. Nothing here is betting or financial advice.
+All code, tests and ledgers are in the project repository (<https://github.com/acharles1070/nfl-playoff-model>). Every figure, table and number in this paper is generated from the pipeline's outputs, built from commit `{{< var sha >}}` on {{< var built >}}:
+
+```bash
+python -m src.simulation.bracket_replay
+python -m src.report.site_data
+python -m src.report.paper_assets
+quarto render paper
+```
+
+The live bracket is built by `python -m src.simulation.live_bracket`. The pipeline rebuilds in about 15 seconds and ships with an automated test suite, including a perturbation test for every feature builder. I developed this work with the assistance of an AI coding assistant (Claude); I am responsible for the design decisions and conclusions, and all results are reproducible from the code. Nothing here is betting or financial advice.

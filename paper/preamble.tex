@@ -1,0 +1,24 @@
+% Extra LaTeX settings for the thesis build (included in the header by _quarto.yml).
+\usepackage{etoolbox}
+\usepackage{needspace}
+
+% Captions: small text, bold label, period separator; tables captioned above, figures below.
+\AtBeginDocument{\captionsetup{font=small,labelfont=bf,labelsep=period,skip=6pt}}
+
+% List the bibliography in the table of contents.
+\AtBeginDocument{\renewcommand{\bibsection}{\section*{References}\addcontentsline{toc}{section}{References}}}
+
+% Tables: footnote-size text, a little more row height, and no page break inside a short table.
+\renewcommand{\arraystretch}{1.12}
+\AtBeginEnvironment{longtable}{\small\Needspace{12\baselineskip}}
+
+% Float pages: stack figures from the top instead of centering them vertically with large gaps.
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{12pt plus 1fil}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
+\renewcommand{\topfraction}{.85}
+\renewcommand{\bottomfraction}{.7}
+\renewcommand{\textfraction}{.1}
+\renewcommand{\floatpagefraction}{.7}

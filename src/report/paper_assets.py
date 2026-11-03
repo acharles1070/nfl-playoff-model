@@ -10,6 +10,7 @@ prose cannot drift away from the pipeline's outputs.
 from __future__ import annotations
 
 import json
+import re
 
 import matplotlib
 
@@ -31,7 +32,19 @@ GREEN, AMBER, BLUE, GRAY, RED, VIOLET = "#2e9d63", "#d98a00", "#2f6fdb", "#7b879
 plt.rcParams.update({
     "font.size": 9.5, "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True,
     "grid.alpha": 0.25, "grid.linestyle": ":", "figure.dpi": 150, "savefig.bbox": "tight", "legend.frameon": False,
+    # Computer Modern, so figure text matches the LaTeX body; TrueType (not Type 3) fonts embed cleanly in the PDF
+    "font.family": "serif", "font.serif": ["cmr10"], "mathtext.fontset": "cm", "axes.formatter.use_mathtext": True,
+    "pdf.fonttype": 42, "ps.fonttype": 42,
 })
+
+
+def typo(text: str) -> str:
+    """Typographic fixes for numbers: a true minus sign (U+2212) instead of a hyphen, and en dashes in year ranges.
+
+    A hyphen-minus renders as a short hyphen in LaTeX text mode; both fixes are what a typeset paper should show.
+    """
+    text = re.sub(r"(?<![\w.])-(?=\d)", "\u2212", text)
+    return re.sub(r"(?<=\d)-(?=\d{4}\b)", "\u2013", text)
 
 
 def load(name: str):
@@ -40,6 +53,8 @@ def load(name: str):
 
 def save(fig, name: str) -> None:
     FIG.mkdir(parents=True, exist_ok=True)
+    # vector PDF for LaTeX (no timestamp, so regenerating does not churn version control) and PNG for the HTML build
+    fig.savefig(FIG / f"{name}.pdf", metadata={"CreationDate": None, "Creator": "matplotlib", "Producer": "matplotlib"})
     fig.savefig(FIG / f"{name}.png", dpi=200)
     plt.close(fig)
     print(f"  figures/{name}")
@@ -158,10 +173,10 @@ def fig_power() -> None:
     ax.axhline(0.8, color="black", ls=":", lw=0.9)
     for x, label in ((111, "111 playoff\ngames"), (2494, "2,494 holdout\ngames")):
         ax.axvline(x, color=RED, ls="--", lw=0.9)
-        ax.text(x * 1.06, 0.04, label, fontsize=7.5, color=RED)
+        ax.text(x * 1.06, 0.28, label.replace("\n", " "), fontsize=7.5, color=RED, rotation=90, va="bottom", ha="left")
     ax.set_xlabel("games in the test")
     ax.set_ylabel("power (5% two-sided test)")
-    ax.legend(fontsize=7.5, loc="center left")
+    ax.legend(fontsize=7.5, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=4, columnspacing=1.2, handlelength=1.6)
     save(fig, "power")
 
 
@@ -310,7 +325,7 @@ def variables() -> dict:
 def write_variables(extra: dict | None = None) -> None:
     PAPER.mkdir(parents=True, exist_ok=True)
     v = {**variables(), **(extra or {})}
-    (PAPER / "_variables.yml").write_text("".join(f'{k}: "{val}"\n' for k, val in v.items()))
+    (PAPER / "_variables.yml").write_text("".join(f'{k}: "{typo(str(val))}"\n' for k, val in v.items()))
     print(f"  _variables.yml ({len(v)} values)")
 
 
@@ -322,19 +337,28 @@ def write_tables() -> None:
     for m in sc["models"]:
         gap = "reference" if m["key"] == "p_market" else f'+{m["gap_vs_market"]:.4f} [+{m["gap_lo"]:.4f}, +{m["gap_hi"]:.4f}]'
         lines.append(f'| {m["label"]} | {m["log_loss"]:.4f} | {m["brier"]:.4f} | {m["accuracy"] * 100:.1f}% | {gap} |')
-    (TAB / "scorecard.md").write_text("\n".join(lines) + "\n")
+    (TAB / "scorecard.md").write_text(typo("\n".join(lines) + "\n"))
 
     rep = load("replication")["rows"]
-    lines = ["| Test seasons | Games | Change in log loss [95% CI] | Seasons Kalman better |", "|:--|--:|--:|--:|"]
-    lines += [f'| {r["window"].replace("primary: ", "").replace("secondary: ", "")} | {r["games"]:,} | {r["delta_log_loss"]:+.4f} [{r["ci_low"]:+.4f}, {r["ci_high"]:+.4f}] | {r["per_season_better"]}/{r["n_seasons"]} |' for r in rep]
-    (TAB / "replication.md").write_text("\n".join(lines) + "\n")
+    lines = ["| Test seasons | Games | Change in log loss [95% CI] | Seasons won |", "|:--|--:|--:|--:|"]
+    for r in rep:
+        kind, _, span = r["window"].partition(": ")
+        years = re.search(r"\d{4}-\d{4}", span).group()
+        tag = "(primary)" if kind == "primary" else "(development)" if "dev" in span else "(holdout, = E01)"
+        lines.append(f'| {years} {tag} | {r["games"]:,} | {r["delta_log_loss"]:+.4f} [{r["ci_low"]:+.4f}, {r["ci_high"]:+.4f}] | {r["per_season_better"]}/{r["n_seasons"]} |')
+    (TAB / "replication.md").write_text(typo("\n".join(lines) + "\n"))
     br = load("bracket_replay")
     pick = [1, 5, 9, 13, 17]
-    rows = ["| Projection made | Model: in field | Model: exact seed | Standings: in field | Standings: exact seed | Qualification log loss |", "|:--|--:|--:|--:|--:|--:|"]
-    for w in br["weekly"]:
-        if w["week"] in pick or w["label"].startswith("End"):
-            rows.append(f'| {w["label"].lower().capitalize()} | {w["model"]["in_field"]}/14 | {w["model"]["exact_seed"]}/14 | {w["standings"]["in_field"]}/14 | {w["standings"]["exact_seed"]}/14 | {w["qual_log_loss"]:.3f} |')
-    (TAB / "bracket_replay_field.md").write_text("\n".join(rows) + "\n")
+    cols = [w for w in br["weekly"] if w["week"] in pick or w["label"].startswith("End")]
+    head = [f'Week {w["week"]}' if w["week"] in pick else "End" for w in cols]
+    rows = ["| Projection made before: | " + " | ".join(head) + " |", "|:--|" + "--:|" * len(cols)]
+    for name, cell in [("Model: in field", lambda w: f'{w["model"]["in_field"]}/14'),
+                       ("Model: exact seed", lambda w: f'{w["model"]["exact_seed"]}/14'),
+                       ("Standings: in field", lambda w: f'{w["standings"]["in_field"]}/14'),
+                       ("Standings: exact seed", lambda w: f'{w["standings"]["exact_seed"]}/14'),
+                       ("Qualification log loss", lambda w: f'{w["qual_log_loss"]:.3f}')]:
+        rows.append(f"| {name} | " + " | ".join(cell(w) for w in cols) + " |")
+    (TAB / "bracket_replay_field.md").write_text(typo("\n".join(rows) + "\n"))
     sm, bs = br["summary"], br["bracket_scores"]
     games = ["| 13 playoff games | Winners picked right | Log loss |", "|:--|--:|--:|",
              f'| My model, real matchups | {sm["model_right"]}/{sm["n_games"]} | {sm["log_loss_model"]:.3f} |',
@@ -343,7 +367,7 @@ def write_tables() -> None:
              f'| Coin flip | 6.5/13 | {sm["log_loss_coin"]:.3f} |',
              f'| Full bracket picked before kickoff: model | {bs["model"]["total"]}/13 | n/a |',
              f'| Full bracket picked before kickoff: higher seed | {bs["higher_seed"]["total"]}/13 | n/a |']
-    (TAB / "bracket_replay_games.md").write_text("\n".join(games) + "\n")
+    (TAB / "bracket_replay_games.md").write_text(typo("\n".join(games) + "\n"))
     print("  tables/*.md")
 
 
@@ -360,19 +384,19 @@ def write_backtest_tables() -> dict:
         g["diff"] = g.model - g.market
         name = {"afc": "AFC champion", "nfc": "NFC champion", "sb": "Super Bowl winner"}
         order = {"WC": 0, "DIV": 1, "CON": 2, "SB": 3}
-        lines = ["| Market | Prices as of | Seasons | Model | Futures | Model - futures |", "|:--|:--|--:|--:|--:|--:|"]
+        lines = ["| Market | Prices as of | Seasons | Model | Futures | Model \u2212 futures |", "|:--|:--|--:|--:|--:|--:|"]
         for (mk, rd), r in sorted(g.iterrows(), key=lambda kv: (["afc", "nfc", "sb"].index(kv[0][0]), order[kv[0][1]])):
             lines.append(f'| {name[mk]} | before {rd} | {int(r.n)} | {r.model:.3f} | {r.market:.3f} | {r["diff"]:+.3f} |')
-        (TAB / "bracket.md").write_text("\n".join(lines) + "\n")
+        (TAB / "bracket.md").write_text(typo("\n".join(lines) + "\n"))
         extra.update({"br_cells": str(len(g)), "br_trail": str(int((g["diff"] > 0).sum()))})
     if (out / "season_backtest_title.csv").exists():
         t = pd.read_csv(out / "season_backtest_title.csv")
         t["d"] = t.logscore_model - t.logscore_market
-        lines = ["| Prior to week | Model | Market | Model - market [95% CI, seasons resampled] |", "|--:|--:|--:|--:|"]
+        lines = ["| Prior to week | Model | Market | Difference [95% CI] |", "|--:|--:|--:|--:|"]
         for w, e in t[t.season >= 2017].groupby("week"):
             d, lo, hi = season_bootstrap(e, "d")
             lines.append(f"| {w} | {e.logscore_model.mean():.3f} | {e.logscore_market.mean():.3f} | {d:+.3f} [{lo:+.3f}, {hi:+.3f}] |")
-        (TAB / "title.md").write_text("\n".join(lines) + "\n")
+        (TAB / "title.md").write_text(typo("\n".join(lines) + "\n"))
         d, lo, hi = season_bootstrap(t[t.season >= 2017], "d")
         extra.update({"ti_diff": f"{d:+.2f}", "ti_lo": f"{lo:+.2f}", "ti_hi": f"{hi:+.2f}"})
     if (out / "season_backtest_playoffs.csv").exists():

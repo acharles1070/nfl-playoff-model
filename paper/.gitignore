@@ -9,5 +9,6 @@ _output/
 *.typ
 *.log
 *.tex
+!preamble.tex
 *.aux
 *.toc

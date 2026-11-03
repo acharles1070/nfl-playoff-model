@@ -49,8 +49,26 @@ def test_every_cross_reference_has_a_target(text):
 def test_included_files_and_figures_exist(text):
     for rel in re.findall(r"\{\{<\s*include\s+([^\s>]+)\s*>\}\}", text):
         assert (PAPER / rel).exists(), f"missing include {rel}"
+    # figure paths carry no extension: LaTeX picks the vector PDF and HTML picks the PNG
     for rel in re.findall(r"\]\((figures/[^)\s]+)\)", text):
-        assert (PAPER / rel).exists(), f"missing figure {rel}"
+        stem = PAPER / rel
+        assert stem.with_suffix(".pdf").exists(), f"missing PDF figure {rel}"
+        assert stem.with_suffix(".png").exists(), f"missing PNG figure {rel}"
+
+
+def test_latex_preamble_is_included_and_tracked():
+    cfg = (PAPER / "_quarto.yml").read_text()
+    assert "include-in-header: preamble.tex" in cfg
+    assert (PAPER / "preamble.tex").exists()
+
+
+def test_numbers_use_typographic_minus_signs():
+    """paper_assets.typo() replaces a hyphen before a digit with U+2212; a leftover one would print as a short hyphen."""
+    files = [PAPER / "_variables.yml", *sorted((PAPER / "tables").glob("*.md"))]
+    if not files[0].exists():
+        pytest.skip("run python -m src.report.paper_assets")
+    for f in files:
+        assert not re.search(r"(?<![\w.])-(?=\d)", f.read_text()), f"ASCII hyphen-minus before a digit in {f.name}"
 
 
 def test_every_citation_is_in_the_bibliography(text):

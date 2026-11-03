@@ -1,4 +1,4 @@
-| Market | Prices as of | Seasons | Model | Futures | Model - futures |
+| Market | Prices as of | Seasons | Model | Futures | Model − futures |
 |:--|:--|--:|--:|--:|--:|
 | AFC champion | before WC | 9 | 1.572 | 1.299 | +0.273 |
 | AFC champion | before DIV | 9 | 1.446 | 1.127 | +0.318 |
@@ -9,4 +9,4 @@
 | Super Bowl winner | before WC | 9 | 2.508 | 2.245 | +0.263 |
 | Super Bowl winner | before DIV | 9 | 2.266 | 1.990 | +0.276 |
 | Super Bowl winner | before CON | 9 | 1.518 | 1.389 | +0.128 |
-| Super Bowl winner | before SB | 9 | 0.673 | 0.692 | -0.019 |
+| Super Bowl winner | before SB | 9 | 0.673 | 0.692 | −0.019 |

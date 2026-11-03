@@ -71,3 +71,11 @@ exists in the future of a live season) and equals the logged `season_sim_v2` odd
 playoff teams than a naive standings baseline in 2 of 19 projections, fewer in 11, level in 6. Games: model 9/13 winners, closing
 line 10/13, higher seed 6/13; log loss 0.577 vs 0.557. 2025 was a hard year for qualification forecasts (0.73 log loss at week 1
 vs 0.63 averaged over 15 seasons).
+
+## 2026-11-03: paper typeset with LaTeX
+
+The PDF build moved from Typst to LaTeX (LuaLaTeX, article class, natbib author-year, BibTeX). Changes: abstract and
+keywords in the front matter, numbered equations, a table of contents, booktabs tables kept at natural width and not
+split across pages, vector Computer Modern figures, true minus signs and en dashes, non-breaking `p = value`, and a
+clean log (no overfull or underfull boxes). Tables 2, 4 and 5 were reshaped to fit the text width (Table 5 is now one
+column per projection week). No result changed: every number still comes from `paper/_variables.yml`.

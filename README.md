@@ -175,14 +175,19 @@ Betting prices on the site come from nflverse's schedule file, never from the Co
 
 ## Paper
 
-`paper/paper.qmd` is a Quarto source for the write-up (PDF and HTML). Every number comes from the
-pipeline through `paper/_variables.yml`; figures and tables are generated, not drawn.
+`paper/paper.qmd` is a Quarto source for the write-up. The PDF is typeset with LaTeX (article class, LuaLaTeX,
+natbib author-year citations with a BibTeX bibliography, booktabs tables, numbered equations, vector figures in
+Computer Modern); the same source also builds an HTML version. Every number comes from the pipeline through
+`paper/_variables.yml`; figures and tables are generated, not drawn.
 
 ```
 python -m src.report.site_data      # data the site and paper share
-python -m src.report.paper_assets   # figures, tables, variables
-quarto render paper                 # HTML + PDF; needs Quarto (https://quarto.org), the PDF uses its bundled Typst (no LaTeX)
+python -m src.report.paper_assets   # figures (PDF + PNG), tables, variables
+quarto render paper                 # HTML + PDF; needs Quarto (https://quarto.org) and a TeX Live or TinyTeX install
 ```
+
+The LaTeX source (`paper.tex`) is kept next to the source after a render (`keep-tex`); extra LaTeX settings live in
+`paper/preamble.tex`.
 
 `tests/test_paper.py` checks (without Quarto) that every variable, cross-reference, include,
 figure and citation resolves.

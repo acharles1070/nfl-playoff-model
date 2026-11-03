@@ -5,15 +5,28 @@ project:
 bibliography: references.bib
 
 format:
-  # Typst ships inside Quarto, so the PDF needs no LaTeX install
-  typst:
-    papersize: us-letter
-    margin:
-      x: 1in
-      y: 1in
+  pdf:
+    documentclass: article
+    papersize: letter
     fontsize: 11pt
+    geometry: [margin=1in]
+    linestretch: 1.15
+    indent: true                      # indented paragraphs, as in a standard LaTeX article (no parskip)
     number-sections: true
     toc: true
+    toc-depth: 2
+    columns: 200                      # keep Pandoc from turning wide pipe tables into wrapped, full-width columns
+    colorlinks: true
+    linkcolor: black
+    citecolor: black
+    urlcolor: blue
+    fig-pos: "htbp"
+    tbl-cap-location: top
+    cite-method: natbib               # \citep / \citet with a BibTeX bibliography
+    biblio-style: plainnat
+    natbiboptions: authoryear,round
+    keep-tex: true
+    include-in-header: preamble.tex
   html:
     theme: cosmo
     toc: true
