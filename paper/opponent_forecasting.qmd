@@ -1,0 +1,151 @@
+---
+title: "Forecasting a Team's Opponents from Public Data: Ratings, Uncertainty and Playoff Paths"
+author: "Aidan Charles"
+date: today
+date-format: "MMMM D, YYYY"
+abstract: |
+  A football operations group preparing for an opponent needs three things from a forecast: how strong that opponent will be *when the game is played*, how far to trust the number, and whom the team is likely to meet in the playoffs. I adapt a leakage-controlled, fundamentals-only rating model (Kalman-filtered team and quarterback strengths on EPA per play, feeding a logistic game model) to those questions, and I measure how far ahead it can be trusted. From six checkpoints in each of the 2011--2025 seasons I forecast every remaining regular-season game using only earlier games ({{< var o_n_forecasts >}} forecasts). Skill decays with distance: nine or more weeks ahead the forecast beats an offseason power ranking by only {{< var o_gain_pre_9 >}} log loss and is overconfident (calibration slope {{< var o_slope_raw_9 >}}); a one-parameter horizon shrinkage fitted on 2011--2016 improves 2017--2025 forecasts by {{< var o_shrink_gain >}} log loss. The dominant source of surprise is the quarterback: when a team's starter changes, forecasts made five to eight weeks ahead lose {{< var o_cost_chg_58 >}} log loss against the forecast made the week of the game, versus {{< var o_cost_same_58 >}} when starters do not change. Empirical 80% revision bands cover {{< var o_cover_ahead >}} of later forecasts on the holdout. For playoff opponents, simulating the season picks the opponent a team actually drew {{< var o_pt_top1_10 >}} of the time from a week-10 forecast (a standings bracket: {{< var o_pt_std_10 >}}) and {{< var o_pt_top1_end >}} at the end of the regular season, where my approximation to the league's tiebreakers is the binding limit. I describe a report generator that produces these quantities for any team and show a worked example. Everything uses public data and no betting-market input; the results are descriptive, and I do not compare against any club's internal models.
+
+  *Keywords:* opponent forecasting, forecast horizon, Kalman filter, quarterback uncertainty, playoff simulation, American football.
+---
+
+## Introduction {#sec-intro}
+
+Preparing for an opponent starts weeks before kickoff. Schedule decisions, roster priorities and the shape of a game plan all rest on a belief about how good the opponent will be on that Sunday, and that belief is a forecast made with incomplete information: ratings that will still move, a quarterback who may change, injuries not yet known. A forecast that reports only a win probability hides the two things a planner needs most: *how much it is likely to move* before the game, and *what would move it*.
+
+This paper adapts a rating model I built and evaluated in an earlier paper in the same repository (a leakage-controlled, fundamentals-only game and bracket model) to the planning question. The earlier paper asked whether the model could beat the betting market. It cannot: on 2017--2025 its log loss is {{< var ll_champ >}} against {{< var ll_market >}} for the closing line. Here I use it for a different job where that benchmark is not the point, and I ask four concrete questions:
+
+1. **How far ahead can an opponent be forecast?** How quickly does skill decay with the number of weeks between forecast and game, and how does it compare with an offseason power ranking (@sec-res-horizon)?
+2. **How much does the quarterback matter to that decay?** (@sec-res-qb)
+3. **Can I attach an honest band to a forecast made weeks ahead?** A band for where the forecast will stand when the game arrives, checked against what happened (@sec-res-band).
+4. **Whom will a team meet in the playoffs?** Round by round, with probabilities, scored against what the real brackets produced (@sec-res-paths).
+
+**Scope.** The inputs are public: play-by-play, schedules and rosters from the nflverse project. There is no film, tracking data, personnel or injury information beyond who started, and no betting-market input. The unit is the team (offense, defense and quarterback), not a scheme or a matchup of position groups, so this is a planning layer for a strength-of-opponent question, not a scouting report. I have not seen any club's internal models and do not compare against them; the benchmarks here are simple public baselines. The analysis is independent work and not affiliated with or endorsed by any NFL club.
+
+**Contributions.** (i) A forecast-horizon study of {{< var o_n_forecasts >}} out-of-sample forecasts that measures the price of looking ahead. (ii) A single-parameter horizon shrinkage and empirical revision bands, both fitted on a development window and checked on a holdout. (iii) Quarterback what-if scenarios and a measurement of how much quarterback changes cost. (iv) Playoff-opponent probabilities from a season simulation, scored against real brackets. (v) A reproducible report generator that produces all of this for any team, with a worked example (@sec-example).
+
+## The rating model and what it outputs {#sec-model}
+
+**Ratings.** Each team carries an offense strength $O_t$ (everything except the quarterback) and a defense strength $D_t$, in expected points added (EPA) per play above an average team [@yurko2019], and each quarterback $k$ carries a strength $Q_k$ that travels with him between teams. A Kalman filter [@kalman1960; @glickman1998] updates all of them after every week of games, in proportion to how uncertain each was: a team I know well moves less than one I know poorly, and credit for a game is split between team and quarterback by their uncertainties. Uncertainty drifts up between games, and between seasons ratings shrink toward the league mean (offense most, quarterbacks least). Hyperparameters were tuned on 2011--2016 and frozen. Every rating used for a game is computed only from earlier weeks, and each feature builder has a perturbation test that rewrites the future and checks the output does not move; the details are in the earlier paper.
+
+**Units.** EPA per play is not a unit a coach thinks in. I multiply by 62.7, the league-average number of offensive plays per team-game, to give a rough *points per game relative to an average team*. A team at $+3$ is expected to outscore an average team by about three points before home field. The scale is rough (EPA is not points) but it ranks and compares teams correctly.
+
+**Game model.** The home-win probability is a logistic regression on two differences: home minus away offense-plus-quarterback strength, and away minus home defense. The intercept is the home-field term; neutral-site games drop it. The model is refit each season on earlier seasons only. This is the pinned forward-test champion; nothing in this paper changes it.
+
+**Outputs for planning.** For a team and an *as-of week* (the report is built from games before that week only), the generator in @sec-example produces: a win probability for every remaining game with a band; the opponent's rating, league rank and projected quarterback; the probability if either quarterback were replaced; the strength of the remaining schedule; the distribution of final wins; and, for each playoff round, the opponents the team is likely to meet.
+
+## Forecasts for games weeks away {#sec-method-horizon}
+
+**Frozen ratings.** A game $h$ weeks after the as-of week is forecast from each team's rating *as of the as-of week*, with each team's quarterback assumed to be its last starter. This is what a planner has: the filter cannot see the games in between. Ratings drift a little (uncertainty grows each week) but the point estimate does not.
+
+**Horizon shrinkage.** The game model was fitted on ratings that were current at kickoff ($h = 0$). Applied to ratings frozen for $h$ weeks, it is overconfident, because the ratings it sees have more error than the ones it was fitted on. I pull the forecast toward 50--50 with one parameter $a$ (@eq-shrink):
+$$
+\operatorname{logit} \hat p_h = \frac{\operatorname{logit} p_{\text{frozen}}}{1 + a\,h}.
+$$ {#eq-shrink}
+I fit $a$ by log loss on the development window (test seasons 2011--2016) only: $a =$ {{< var o_shrink_a >}}. It is frozen in the code and checked against a re-fit by a test. Because this is a candidate change to the forecast, I added it to the experiment registry of the earlier paper as comparison number {{< var n_tests >}} and the Holm and Benjamini--Hochberg corrections there [@holm1979; @benjamini1995] account for it.
+
+**Revision bands.** What a planner wants next to a number is how far it is likely to move. For each horizon I measure, on the development window, the root-mean-square difference between the forecast made the week of the game (the same game model with up-to-date ratings and the actual starter) and the shrunk frozen forecast, on the logit scale: $\sigma(h)$. The 80% *revision band* for a forecast made $h$ weeks ahead is then $\operatorname{logit} \hat p_h \pm 1.28\,\sigma(h)$, mapped back to probabilities. The band answers "where will this forecast stand when the game arrives?" It is deliberately *not* a confidence interval for the true win probability. I also keep $\sigma(h)$ separately for games in which a starter changes, so the report can show a wider band conditional on a quarterback change.
+
+**Quarterback what-ifs.** For any game I recompute the probability with either team's quarterback replaced by a *replacement quarterback* whose rating is the mean rating of quarterbacks making their first three career starts, estimated only from seasons before the one being forecast ({{< var o_ex_repl >}} points per game, against {{< var o_ex_qb_pts >}} for {{< var o_ex_qb >}}). Nothing else changes, so the difference isolates the quarterback.
+
+## Playoff paths {#sec-method-paths}
+
+The season simulator from the earlier paper plays every remaining regular-season game, resolves divisions and seeds, and plays the bracket with NFL reseeding, for {{< var o_ex_sims >}} simulated seasons. Every team carries one latent strength shock per simulated season, shared by all its games (so an opponent that is strong in one round is strong in all of them), with variance from the filter's own posterior. Win probabilities of single games are preserved. I added an optional counter to the simulator that records, for each round, which team hosted which and who won; it draws no random numbers, and a test checks that the simulation output is bit-for-bit unchanged.
+
+From those counts, for team $i$ and round $R$: $P(\text{meet}_{ij}^R)$ is the share of simulations in which $i$ plays $j$ in round $R$; $P(\text{reach}_i^R) = \sum_j P(\text{meet}_{ij}^R)$; and the opponent distribution *given that $i$ gets there* is $P(\text{meet}_{ij}^R) / P(\text{reach}_i^R)$, together with $i$'s win probability against $j$ in the simulations where they meet. The main approximation is tiebreaking: the league's real procedure is elaborate, and I break ties at random.
+
+## Evaluation design {#sec-protocol}
+
+**Horizon study.** For each test season 2011--2025 and each as-of week in $\{1, 3, 6, 9, 12, 15\}$, I forecast every remaining regular-season game from ratings built from games before that week only, with the game model trained on earlier seasons only (@sec-model). Each forecast is scored against the result with log loss (primary; a strictly proper scoring rule [@gneiting2007]) and a calibration slope, and against three references on the same games: the **week-of-game forecast** (the same model at $h = 0$, which isolates the price of looking ahead), **preseason ratings** (an offseason power ranking: ratings frozen before week 1), and **home field only** (the training-window home win rate). Differences are paired by game, with 95% bootstrap intervals [@efron1979] that resample games and keep all forecasts of one game together. I summarize by weeks ahead (0, 1, 2, 3--4, 5--8, 9 or more), and by whether either team's starter on game day differs from the one assumed at the as-of week.
+
+**Windows.** The development window is test seasons 2011--2016, where $a$ and $\sigma(h)$ are fitted; the holdout is 2017--2025, where they are scored with their values frozen. As in the earlier paper, the holdout is *not sealed*: the rating architecture was settled while 2017--2025 was the only test window, and every comparison in the registry is scored on it. The horizon study is a diagnostic of one fixed model; the only fitted pieces are $a$ and $\sigma(h)$, and $a$ is the registered comparison.
+
+**Playoff opponents.** For each completed season and for forecasts made before weeks 6, 10 and 14 and at the end of the regular season, I simulate the rest of the season from games before that week, then score the real postseason. For every team that played in a round I ask what probability the forecast gave to the opponent it actually drew, given that it got there, and whether that opponent was the forecast's top pick or in its top three. The comparison is the simplest planner: the field and bracket if the season ended today, higher seed advancing. There are only about {{< var o_pt_n >}} team-rounds in {{< var o_pt_seasons >}} seasons, so this is descriptive.
+
+## Results {#sec-results}
+
+### How far ahead can an opponent be forecast? {#sec-res-horizon}
+
+@tbl-horizon and @fig-opp-horizon show the holdout (2017--2025, {{< var o_n_fc_holdout >}} forecasts). Three things stand out.
+
+{{< include tables/opp_horizon.md >}}
+
+: Holdout log loss by weeks between forecast and game (lower is better). *Unadjusted* and *shrunk* are the frozen-ratings forecasts without and with the horizon shrinkage; *week of the game* is the same model with up-to-date ratings and the actual starter. The games in each row differ, so compare across columns, not down rows. {#tbl-horizon}
+
+![Left: log loss by horizon on the holdout. The gap between the green and blue lines is the price of looking ahead. Right: calibration slope of the frozen-ratings forecast, without (red) and with (green) the horizon shrinkage; a slope below 1 means too confident.](figures/opp_horizon){#fig-opp-horizon width=95%}
+
+*Looking ahead is costly, and the cost grows steadily.* Against the forecast made the week of the game, a forecast made one week ahead gives up {{< var o_cost_1 >}} log loss, five to eight weeks ahead {{< var o_cost_58 >}} and nine or more weeks ahead {{< var o_cost_9 >}}.
+
+*Ratings beat an offseason ranking everywhere, but by less each week.* The frozen-ratings forecast improves log loss over preseason ratings by {{< var o_gain_pre_0 >}} the week of the game, {{< var o_gain_pre_58 >}} five to eight weeks out and only {{< var o_gain_pre_9 >}} nine or more weeks out. Over home field alone the improvement shrinks from {{< var o_gain_const_0 >}} to {{< var o_gain_const_9 >}}. In practical terms, a forecast of a game two months away is mostly an offseason ranking with a mild in-season update.
+
+*Long-range forecasts are overconfident, and shrinkage helps modestly.* The unadjusted calibration slope falls from {{< var o_slope_raw_0 >}} the week of the game to {{< var o_slope_raw_58 >}} at five to eight weeks and {{< var o_slope_raw_9 >}} at nine or more. The horizon shrinkage ($a =$ {{< var o_shrink_a >}}) raises these to {{< var o_slope_shr_58 >}} and {{< var o_slope_shr_9 >}}. Over all {{< var o_shrink_n >}} holdout games forecast at least a week ahead it improves log loss by {{< var o_shrink_gain >}}. That is nominally significant on its own but small, and it does not survive the multiple-testing correction applied to the registry's {{< var n_tests >}} comparisons (only the cross-season rating filter does). I report it as a reasonable calibration step fitted on one window and supported on another, not a proven improvement.
+
+### The quarterback is the main source of surprise {#sec-res-qb}
+
+The frozen forecast assumes each team's last starter. On the holdout, a starter on at least one side differed from that assumption in {{< var o_qbshare_58 >}} of forecasts made five to eight weeks ahead, and {{< var o_qbshare_9 >}} at nine or more weeks (offseason changes dominate the early checkpoints). @fig-opp-qb splits the cost of looking ahead by whether that happened.
+
+![Cost of forecasting ahead (log loss against the forecast made the week of the game) on the holdout, by whether either team's starter differed from the one assumed. Bars are 95% intervals.](figures/opp_qb){#fig-opp-qb width=70%}
+
+When starters are as assumed, the cost of forecasting five to eight weeks ahead is {{< var o_cost_same_58 >}} and nine or more weeks ahead {{< var o_cost_same_9 >}}, intervals that include zero. When a starter changes, the cost is {{< var o_cost_chg_58 >}} and {{< var o_cost_chg_9 >}}, intervals that exclude it. Most of the decay in @sec-res-horizon is therefore quarterback news, and the rest is small. For a planner this says where to spend attention: a quarterback's availability moves the forecast more than the passage of eight weeks of team results, which is why the report prints the what-if probability next to every number.
+
+### Are the bands honest? {#sec-res-band}
+
+@fig-opp-band shows how far forecasts move (left) and whether the 80% revision bands contain the forecast made the week of the game (right). The typical revision grows from {{< var o_sd_1 >}} on the logit scale at one week to {{< var o_sd_4 >}} at four, {{< var o_sd_8 >}} at eight and {{< var o_sd_12 >}} at twelve or more.
+
+![Left: typical revision (RMS of the logit difference between the week-of-game forecast and the shrunk frozen forecast) on the development window, overall and by whether a starter changed. Right: share of week-of-game forecasts that fall inside the 80% band, on the holdout (colors) and in the development window where the band was fitted (gray). At zero weeks ahead with starters as assumed the forecast is identical by construction.](figures/opp_band){#fig-opp-band width=95%}
+
+On the holdout, across all forecasts made at least a week ahead, the bands cover {{< var o_cover_ahead >}} of later forecasts against a nominal 80% (and {{< var o_cover_dev >}} in the development window where they were fitted): slightly narrow, as expected of bands fitted on a shorter window. The average hides a split. When starters are as assumed, coverage is above nominal ({{< var o_cover_same_58 >}} at five to eight weeks); when a starter changes it is well below ({{< var o_cover_chg_58 >}}). The bands are right on average and wrong conditional on the one thing a planner can often know. The report therefore shows the wider band that applies if a quarterback changes, built from the revision spread of those games, alongside the default.
+
+### Whom will a team meet in the playoffs? {#sec-res-paths}
+
+{{< include tables/opp_paths.md >}}
+
+: Playoff-opponent forecasts for 2011--2025 (every team that played in a round, given that it reached it). For the model: *Top pick* is the share of team-rounds in which the opponent actually drawn was the forecast's most likely opponent, *Top 3* the share in its top three, and *Mean prob.* the average probability it gave the real opponent. *Standings* is the top-pick share for a bracket that assumes the season ends today and the higher seed always advances. {#tbl-paths}
+
+A forecast made before week 10 puts {{< var o_pt_p_10 >}} probability on the opponent a team really drew, on average, and its top pick is right {{< var o_pt_top1_10 >}} of the time ({{< var o_pt_top3_10 >}} within the top three), against {{< var o_pt_std_10 >}} for the standings bracket. That is far better than the baseline but still a minority of cases, which is the honest message: with about eight weeks left, naming a single likely opponent is right roughly one time in four, and a ranked list with probabilities is the useful product. The forecast sharpens as the season ends ({{< var o_pt_top1_14 >}} before week 14).
+
+At the end of the regular season the field is essentially known, and the remaining uncertainty is only in who wins each game and, with it, the reseeding. Even so, the top pick is right {{< var o_pt_top1_end >}} of the time. Two things limit this and I want to be explicit about them. First, round-by-round (@tbl-paths-round) the Wild Card round, whose matchups are determined by final seeds, should be nearly certain at that point, and it is not. The likely cause is tiebreaking: the simulator breaks ties at random and the baseline by point differential, so a team tied on record is often seeded wrongly (in 2024, for example, the baseline made Seattle an NFC division winner where the Rams, with the same record, won the division). Both approximations cost matchups. Implementing the league's actual tiebreakers is the clear next step and would lift both. Second, later rounds depend on upsets, so ranks are intrinsically low.
+
+{{< include tables/opp_paths_round.md >}}
+
+: Forecasts made before week 10, by round; columns as in @tbl-paths. {#tbl-paths-round}
+
+## A worked report {#sec-example}
+
+The generator is `python -m src.opponents.report --team WAS`. @tbl-example below is its output for {{< var o_ex_team >}}, using games through {{< var o_ex_through >}} (the report is as of before week {{< var o_ex_week >}} of the {{< var o_ex_season >}} season). I chose the team as an illustration of the format, and the numbers will change every week; the repository contains the output and the command that produced it.
+
+At {{< var o_ex_record >}} with an overall rating of {{< var o_ex_rating >}} points per game (rank {{< var o_ex_rank >}} of 32), the model projects {{< var o_ex_ew >}} final wins (80% range {{< var o_ex_w10 >}} to {{< var o_ex_w90 >}}) and a {{< var o_ex_playoffs >}} chance of the playoffs. The {{< var o_ex_remaining >}} remaining games are worth {{< var o_ex_rem_ew >}} expected wins against opponents averaging {{< var o_ex_sos >}} points per game, the {{< var o_ex_sos_rank >}} hardest remaining schedule of 32. The easiest game on the list is {{< var o_ex_best >}}, the hardest {{< var o_ex_worst >}}. The band for the next game, week {{< var o_ex_next_week >}} against {{< var o_ex_next >}}, is narrow ({{< var o_ex_band_w >}}) because it is a week away; the bands widen with distance. The largest quarterback sensitivity is {{< var o_ex_swing >}}.
+
+{{< include tables/opp_example_schedule.md >}}
+
+: Remaining schedule from the report. *Win* is the shrunk frozen-ratings probability; *80% band* is where it will probably stand when the game arrives; the two *if out* columns replace that team's quarterback with a first-start replacement and change nothing else. *Opp rating* is points per game relative to an average team (rank among 32). Starts are quarterback starts in the data since 1999. {#tbl-example}
+
+{{< include tables/opp_example_path.md >}}
+
+: Playoff path from the same report, conditional on getting there (the probabilities of getting there are in the second column; rounds a team rarely reaches have few simulated cases behind them). {#tbl-example-path}
+
+## Limits, and what would make it more useful {#sec-limits}
+
+**Public data only.** The model sees results, not information. Injuries, practice participation, rest, travel and weather are not in it, and in the earlier paper I tested the public versions of several (injury-report burden, roster status, rest and bye flags, neutral site, a pass/rush split of the ratings) and found no detectable gain; that says the public versions add little to a team-strength rating, not that these factors do not matter. A club's own data (availability, tracking, scouting grades) is where a planning model would improve, and the revision-band machinery here is a way to *measure* whether it does: a better input should shrink $\sigma(h)$ without lowering coverage.
+
+**Strength, not style.** The unit is a team's offense, defense and quarterback, so the report says how strong an opponent is, not how it plays. Forecasting tendencies (pace, pass rate, fourth-down aggressiveness) is a different problem I have not attempted.
+
+**Approximations.** Tiebreaking is random (@sec-res-paths). The replacement quarterback is an average first-starter, not a specific backup. Ratings are in EPA, converted to points by a constant. The horizon study uses six checkpoints per season and the standard errors treat games as independent apart from repeated forecasts of the same game.
+
+**Evidence is limited.** The playoff-opponent results rest on about {{< var o_pt_n >}} team-rounds and are descriptive. The holdout (2017--2025) is not sealed, as in the earlier paper. The shrinkage was fitted on one window and supported on another but does not survive the family-wise correction. I have not compared any of this with a club's internal tools, and nothing here is betting advice; the betting market is not an input.
+
+**Next.** (i) Implement the league's actual tiebreakers. (ii) Add a game-week override file for announced starters and injuries, so the report conditions on news the way the what-if columns do by hand. (iii) Score the live reports forward: this season's reports can be logged to the same hash-chained ledger as the predictions, so the revision bands are tested on games that had not happened when they were written.
+
+## Reproducibility and disclosures {.unnumbered}
+
+All code, tests and ledgers are in the project repository (<https://github.com/acharles1070/nfl-playoff-model>). The numbers, tables and figures in this paper are generated from tracked summaries by `python -m src.report.paper_assets`. To reproduce the studies and the example:
+
+```bash
+python -m src.pipeline                      # rebuild the data tables (~15 s)
+python -m src.opponents.horizon             # horizon study, shrinkage, bands (minutes)
+python -m src.opponents.paths_backtest      # playoff-opponent study (minutes)
+python -m src.opponents.report --team WAS   # the report for any team
+python -m src.report.paper_assets && quarto render paper/opponent_forecasting.qmd
+```
+
+Data are from the nflverse project. This is independent work, not affiliated with or endorsed by any NFL club, and the team in the worked example is an illustration chosen for format. I developed it with the assistance of an AI coding assistant (Claude); I am responsible for the design decisions and conclusions, and all results are reproducible from the code. Nothing here is betting or financial advice.

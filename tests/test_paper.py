@@ -1,4 +1,4 @@
-"""Structural checks on paper/paper.qmd that a render would otherwise catch late.
+"""Structural checks on the Quarto papers (paper/*.qmd) that a render would otherwise catch late.
 
 Quarto is not required: these tests parse the source, so they also run in CI.
 """
@@ -11,14 +11,12 @@ from pathlib import Path
 import pytest
 
 PAPER = Path(__file__).resolve().parents[1] / "paper"
-QMD = PAPER / "paper.qmd"
+QMDS = sorted(PAPER.glob("*.qmd"))
 
 
-@pytest.fixture(scope="module")
-def text() -> str:
-    if not QMD.exists():
-        pytest.skip("paper not present")
-    return QMD.read_text()
+@pytest.fixture(scope="module", params=QMDS, ids=[q.name for q in QMDS])
+def text(request) -> str:
+    return request.param.read_text()
 
 
 @pytest.fixture(scope="module")

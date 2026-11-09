@@ -412,8 +412,13 @@ def main() -> None:
         fn()
     TAB.mkdir(parents=True, exist_ok=True)
     extra = write_backtest_tables()
+    from src.report import opponent_assets          # imported here: it needs this module's colors and helpers
+
+    opponent_assets.make_figures()
+    extra.update(opponent_assets.variables())
     write_variables(extra)
     write_tables()
+    opponent_assets.write_tables()
 
 
 if __name__ == "__main__":

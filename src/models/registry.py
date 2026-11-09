@@ -65,6 +65,8 @@ EXPERIMENTS = [
     ("E36", "home edge", "Recency-weighted training, half-life 5 seasons (post hoc)", -0.0003, -0.0015, 0.0009, "2017-25", "hfa_experiment"),
     ("E37", "home edge", "Recency-weighted training, half-life 3 seasons (post hoc)", -0.0001, -0.0019, 0.0017, "2017-25", "hfa_experiment"),
     ("E38", "home edge", "Recency-weighted training, half-life 2 seasons (post hoc)", 0.0002, -0.0021, 0.0025, "2017-25", "hfa_experiment"),
+    # --- forecasts made weeks ahead (opponent planning); shrinkage fitted on 2011-2016, scored on 2017-2025, 2,240 games
+    ("E39", "horizon", "Shrink forecasts made 1+ weeks ahead: logit / (1 + 0.0218 h) vs unshrunk", -0.0019, -0.0033, -0.0005, "2017-25", "opponents.horizon"),
 ]
 
 

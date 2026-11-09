@@ -367,8 +367,8 @@ The only truly out-of-sample evidence is predictions made *before* games.
 
 ## 8. Scorecard: everything I tried
 
-All 37 comparisons are in [EXPERIMENT_REGISTRY.md](EXPERIMENT_REGISTRY.md) with Holm and
-Benjamini-Hochberg corrections: 4 are nominally significant (about 1.9 expected by chance),
+All 38 comparisons are in [EXPERIMENT_REGISTRY.md](EXPERIMENT_REGISTRY.md) with Holm and
+Benjamini-Hochberg corrections: 5 are nominally significant (about 1.9 expected by chance),
 and **only the cross-season ratings survive**. The paired per-game log-loss SD is 0.100, so
 the 2,494-game holdout can only detect improvements of about 0.0056; confirming 0.002 would
 take ~69 seasons.
@@ -397,6 +397,7 @@ excludes 0 where the sample allows, or strong structural justification.
 | Flatten title odds (p^alpha) | alpha 0.5-0.6: -0.10 both eras; ~0.8 over all snapshots; 15 champions, p~0.07 | not applied; test forward |
 | Scale shared shock variance (kappa) | no effect | rejected |
 | Shrink playoff-game logits (beta) | best ~0.9, -0.0005 | rejected |
+| Shrink long-range forecasts, logit/(1+0.0218 h) | -0.0019 [-0.0033,-0.0005] on 2,240 holdout games forecast 1+ weeks ahead; p=0.008, not multiplicity-robust | **adopted for opponent reports (a calibration step, fitted on 2011-2016)** |
 
 **Where I stand.** Holdout log loss 0.6304 against the market's 0.6074: a gap
 of 0.023 (95% CI [0.016, 0.030]). I have recovered about half of the original

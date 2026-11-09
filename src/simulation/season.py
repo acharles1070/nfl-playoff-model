@@ -59,11 +59,20 @@ def simulate_season(
     n_sims: int = 32768,
     seed: int = 0,
     seed_probs: bool = False,
+    detail: dict | None = None,
 ) -> pd.DataFrame:
     """Simulate the rest of the season and the playoffs.
 
     seed_probs=True adds p_seed_1..p_seed_N (probability of finishing as each playoff seed). The default
     leaves the output columns, and so the logged title-odds ledger, exactly as before.
+
+    detail: pass an empty dict to have it filled with who plays whom. Nothing random is drawn for it, so the
+    returned table is identical with or without it.
+        teams       team order of every array below
+        wins_x2     (n, 2*max_wins+1) simulations ending on each win total, in half-win steps
+        hosted      round -> (n, n); entry [i, j] counts simulations in which i hosted j in that round
+        host_won    round -> (n, n); entry [i, j] counts those in which the host won
+    The Super Bowl is neutral: the AFC champion is listed first.
     """
     teams = sorted(state.wins)
     n = len(teams)
@@ -133,6 +142,19 @@ def simulate_season(
     # ---- 3) playoffs ------------------------------------------------------------
     rows_ = np.arange(S)
 
+    if detail is not None:
+        top = int(np.ceil(wins.max() * 2)) + 1
+        detail["teams"] = teams
+        detail["n_sims"] = S
+        detail["wins_x2"] = np.stack([np.bincount((wins[i] * 2).round().astype(int), minlength=top) for i in range(n)])
+        detail["hosted"] = {r: np.zeros((n, n)) for r in ("WC", "DIV", "CON", "SB")}
+        detail["host_won"] = {r: np.zeros((n, n)) for r in ("WC", "DIV", "CON", "SB")}
+
+    def note(rnd, h_idx, a_idx, host_win):
+        if detail is not None:
+            np.add.at(detail["hosted"][rnd], (h_idx, a_idx), 1.0)
+            np.add.at(detail["host_won"][rnd], (h_idx, a_idx), host_win.astype(float))
+
     def play(h_idx, a_idx, neutral=False):
         m = (m_neutral if neutral else m_home)[h_idx, a_idx]
         s = np.sqrt(np.maximum(1.0 - tau2[h_idx] - tau2[a_idx], MIN_S ** 2))
@@ -152,6 +174,7 @@ def simulate_season(
             hs, as_ = first_host + i, n_seeds - i
             h, a = sd[:, hs - 1], sd[:, as_ - 1]
             win = play(h, a)
+            note("WC", h, a, win)
             survivors.append(np.where(win, hs, as_))
 
         surv = np.sort(np.vstack(survivors).T, axis=1)                   # (S, 4) seed numbers
@@ -165,11 +188,13 @@ def simulate_season(
         for hi, lo in ((0, 3), (1, 2)):
             h, a = team(surv[:, hi]), team(surv[:, lo])
             win = play(h, a)
+            note("DIV", h, a, win)
             div_winner_seed.append(np.where(win, surv[:, hi], surv[:, lo]))
 
         finalists = np.sort(np.vstack(div_winner_seed).T, axis=1)
         h, a = team(finalists[:, 0]), team(finalists[:, 1])
         win = play(h, a)
+        note("CON", h, a, win)
         champ = np.where(win, h, a)
         champions[conf] = champ
         conf_wins[champ, rows_] = True
@@ -177,6 +202,7 @@ def simulate_season(
     conferences = list(champions)
     a, b = champions[conferences[0]], champions[conferences[1]]
     win_a = play(a, b, neutral=True)
+    note("SB", a, b, win_a)
     sb_champ = np.where(win_a, a, b)
 
     title = np.zeros((n, S), dtype=bool)

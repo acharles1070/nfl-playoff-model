@@ -1,11 +1,11 @@
 # Experiment registry and multiple-testing control
 
-Every out-of-sample comparison run in this project (37 in total), as a single family.
+Every out-of-sample comparison run in this project (38 in total), as a single family.
 `delta` is the paired log-loss difference versus the model it was tested against
 (negative = better). p-values are recovered from the bootstrap intervals (normal
 approximation); Holm controls the family-wise error rate, BH the false-discovery rate.
 
-- nominally significant at 0.05: **4** (about 1.9 would be expected by chance alone)
+- nominally significant at 0.05: **5** (about 1.9 would be expected by chance alone)
 - surviving Holm: **1**; surviving BH: **1**
 
 | id | experiment | delta | 95% interval | p | p (Holm) | survives |
@@ -47,10 +47,11 @@ approximation); Holm controls the family-wise error rate, BH the false-discovery
 | E36 | Recency-weighted training, half-life 5 seasons (post hoc) | -0.0003 | [-0.0015, +0.0009] | 0.624 | 1.000 | no |
 | E37 | Recency-weighted training, half-life 3 seasons (post hoc) | -0.0001 | [-0.0019, +0.0017] | 0.913 | 1.000 | no |
 | E38 | Recency-weighted training, half-life 2 seasons (post hoc) | +0.0002 | [-0.0021, +0.0025] | 0.865 | 1.000 | no |
+| E39 | Shrink forecasts made 1+ weeks ahead: logit / (1 + 0.0218 h) vs unshrunk | -0.0019 | [-0.0033, -0.0005] | 0.008 | 0.289 | no |
 
 ## How clean is the holdout?
 
-Every comparison above is scored on the holdout window or later: 31 on 2017-2025, 6 on 2014-2025 and 0 on 2023-2025. The registry holds no development-window numbers. The Kalman ratings, the quarterback layer and roughly 20 of the early experiments were developed on 2026-09-30, when 2017-2025 was the only test window; the formal protocol (select ideas on 2002-2016, confirm on 2017-2025) was adopted on 2026-10-06 when history was extended to 1999. Hyperparameters were tuned on 2011-2016 only and frozen. The holdout is therefore not sealed: it has been examined for every idea, which is exactly why the family-wise corrections above are applied to these looks.
+Every comparison above is scored on the holdout window or later: 32 on 2017-2025, 6 on 2014-2025 and 0 on 2023-2025. The registry holds no development-window numbers. The Kalman ratings, the quarterback layer and roughly 20 of the early experiments were developed on 2026-09-30, when 2017-2025 was the only test window; the formal protocol (select ideas on 2002-2016, confirm on 2017-2025) was adopted on 2026-10-06 when history was extended to 1999. Hyperparameters were tuned on 2011-2016 only and frozen. The holdout is therefore not sealed: it has been examined for every idea, which is exactly why the family-wise corrections above are applied to these looks.
 
 E34 is intentionally absent: that comparison used a licensed third-party dataset that cannot be published. It showed no detectable effect and is not counted above; including it would not change the survivor.
 

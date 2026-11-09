@@ -623,3 +623,80 @@ def test_roster_burden_uses_only_prior_snap_history():
 
     # P2's importance in his week-6 inactive must not see his week-6 (or later) snaps
     assert changed.loc[(2021, 6), "lost_ina_DB"] == pytest.approx(base.loc[(2021, 6), "lost_ina_DB"])
+
+
+# ---------------------------------------------------------------------------
+# Opponent forecasts (src/opponents): rating rows projected from an as-of week
+# ---------------------------------------------------------------------------
+
+from types import SimpleNamespace  # noqa: E402
+
+from src.opponents.forecast import projected_ratings, replacement_qb  # noqa: E402
+
+
+def _opponent_inputs(team_game: pd.DataFrame, games: pd.DataFrame) -> SimpleNamespace:
+    games = games.assign(game_type="REG", is_played=True)
+    return SimpleNamespace(games=games, team_game=team_game, qb_game=_qb_game_for(team_game), params=RatingParams())
+
+
+@pytest.mark.parametrize("as_of", [2, 4, 6])
+def test_projected_ratings_ignore_every_game_from_the_as_of_week_on(as_of):
+    team_game, games = _two_season_team_game()
+    base = projected_ratings(_opponent_inputs(team_game, games), 2022, as_of)
+
+    # rewrite the box score of every game in the as-of week and later: the projection must not move
+    rewritten = team_game.copy()
+    late = games.loc[games["season"].eq(2022) & games["week"].ge(as_of), "game_id"]
+    for gid in late:
+        rewritten = _perturb_game(rewritten, gid)
+    perturbed = projected_ratings(_opponent_inputs(rewritten, games), 2022, as_of)
+
+    cols = ["pregame_off", "pregame_def", "pregame_off_var", "pregame_def_var", "pregame_qb", "pregame_qb_var", "pregame_qb_id"]
+    b = base.sort_values(["game_id", "team"]).reset_index(drop=True)
+    p = perturbed.sort_values(["game_id", "team"]).reset_index(drop=True)
+    assert b[["game_id", "team"]].equals(p[["game_id", "team"]])
+    for col in cols:
+        assert b[col].equals(p[col]) or np.allclose(b[col].to_numpy(dtype=float), p[col].to_numpy(dtype=float)), \
+            f"projected ratings leak: {col} moved after rewriting games from week {as_of} on"
+
+    # ...and rewriting an EARLIER game must matter (the test has teeth)
+    early = games.loc[games["season"].eq(2022) & games["week"].eq(1), "game_id"].iloc[0]
+    moved = projected_ratings(_opponent_inputs(_perturb_game(team_game, early), games), 2022, as_of)
+    m = moved.sort_values(["game_id", "team"]).reset_index(drop=True)
+    assert not np.allclose(b["pregame_off"], m["pregame_off"])
+
+
+def test_projected_ratings_cover_exactly_the_games_not_yet_played():
+    team_game, games = _two_season_team_game()
+    rows = projected_ratings(_opponent_inputs(team_game, games), 2022, 4)
+    expect = set(games.loc[games["season"].eq(2022) & games["week"].ge(4), "game_id"])
+    assert set(rows["game_id"]) == expect
+    assert rows.groupby("game_id").size().eq(2).all()
+
+
+def test_replacement_qb_ignores_the_target_season_and_later():
+    rng = np.random.default_rng(3)
+    r = pd.DataFrame({"season": np.repeat([2018, 2019, 2020, 2021], 40), "pregame_qb_id": "Q",
+                      "pregame_qb_starts": np.tile(np.arange(40) % 5, 4), "pregame_qb": rng.normal(0, 0.03, 160)})
+    base = replacement_qb(r, 2021, first_season=2018)
+    edited = r.copy()
+    edited.loc[edited["season"].ge(2021), "pregame_qb"] += 5.0
+    assert replacement_qb(edited, 2021, first_season=2018) == base
+    edited.loc[edited["season"].eq(2019), "pregame_qb"] += 5.0
+    assert replacement_qb(edited, 2021, first_season=2018) != base
+
+
+def test_projected_ratings_keep_an_earlier_unplayed_game_on_the_schedule():
+    """A Monday-night game from the week before the as-of week is still to be played: it is forecast, and teaches the filter nothing."""
+    team_game, games = _two_season_team_game()
+    inp = _opponent_inputs(team_game, games)
+    straggler = games.loc[games["season"].eq(2022) & games["week"].eq(3), "game_id"].iloc[0]
+    inp.games.loc[inp.games["game_id"].eq(straggler), "is_played"] = False
+    inp.team_game = team_game.loc[~team_game["game_id"].eq(straggler)]
+    inp.qb_game = _qb_game_for(inp.team_game)
+
+    rows = projected_ratings(inp, 2022, 4)
+    assert straggler in set(rows["game_id"])
+    later = projected_ratings(_opponent_inputs(team_game, games), 2022, 4)
+    both = rows.merge(later, on=["game_id", "team"], suffixes=("", "_x"))
+    assert not both.empty

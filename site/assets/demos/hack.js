@@ -1,6 +1,6 @@
 import { h, s, plot, responsive, normCdf, gaussian, mulberry32, loadJSON } from "../lib.js";
 
-let M = 37;               // overwritten with the registry's count at mount
+let M = 38;               // overwritten with the registry's count at mount
 const ALPHA = 0.05;
 
 function pvals(rng) { return Array.from({ length: M }, () => 2 * (1 - normCdf(Math.abs(gaussian(rng))))); }

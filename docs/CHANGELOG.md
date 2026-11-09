@@ -3,6 +3,30 @@
 Model definitions change only by creating a NEW model id (see CLAUDE.md). Bug fixes that move
 outputs are recorded here with their measured effect.
 
+## 2026-11-09: opponent forecasting (`src/opponents`, `paper/opponent_forecasting.qmd`)
+
+**New.** A planning layer for football operations: per-team opponent report (`python -m src.opponents.report`), a
+forecast-horizon study (`src.opponents.horizon`) and a playoff-opponent study (`src.opponents.paths_backtest`). See
+`docs/OPPONENTS.md`. The champion model, the title simulator's outputs and every ledger are unchanged.
+
+**Registry.** E39, a horizon shrinkage `logit / (1 + a h)` with `a = 0.0218` fitted on 2011-2016, scored on 2,240
+2017-2025 games forecast 1+ weeks ahead: -0.0019 [-0.0033, -0.0005], p = 0.008, Holm 0.29. The family is now 38
+comparisons, 5 nominally significant, and still only E01 survives Holm and BH.
+
+**Simulator.** `simulate_season(detail=...)` optionally counts who hosted whom in each playoff round. It draws no random
+numbers; `tests/test_opponents.py` asserts the output is identical with and without it.
+
+**Findings worth keeping straight.** The rating filter's posterior band is not a forecast-revision band (it is far
+wider than anything a forecast actually moves); the revision band is empirical and slightly narrow on the holdout
+(76% against a nominal 80%), and badly under-covers when a starting quarterback changes. Playoff-opponent accuracy at
+the end of the regular season is limited by random tiebreaking, not by team strength.
+
+**Report semantics.** The as-of week is the last week with a result plus one; an earlier unplayed game (Monday night)
+stays on the schedule (`src.opponents.paths.state_before`, `projected_ratings`). `league_state` in `season_backtest`
+would drop such a game; it is left as is because the ledger convention depends on it.
+
+**Docs corrected.** Experiment counts (37 -> 38, 4 -> 5 nominal) in the README, METHODS, CLAUDE.md and the site.
+
 ## 2026-10-07: neutral-site probabilities fixed (title simulator `season_sim_v1` -> `season_sim_v2`)
 
 **Bug.** `build_table` obtained neutral-site game logits by subtracting the logistic model's

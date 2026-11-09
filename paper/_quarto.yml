@@ -1,6 +1,9 @@
 project:
   type: default
   output-dir: _output
+  render:                             # the two papers only; tables/*.md are includes, not documents
+    - paper.qmd
+    - opponent_forecasting.qmd
 
 bibliography: references.bib
 

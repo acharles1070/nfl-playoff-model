@@ -27,6 +27,12 @@ python3.14 -m venv .venv
 
 **Every statistical method, explained in plain language: [`docs/METHODS.md`](docs/METHODS.md).**
 
+**For football operations: opponent forecasts for any team ([`docs/OPPONENTS.md`](docs/OPPONENTS.md), paper in `paper/opponent_forecasting.qmd`).**
+
+```bash
+.venv/bin/python -m src.opponents.report --team WAS   # remaining opponents, bands, QB what-ifs, playoff path
+```
+
 Data is downloaded from [nflverse](https://github.com/nflverse) via
 `nflreadpy` and cached per season in `data/raw/pbp/` (gitignored).
 
@@ -111,7 +117,7 @@ quarter-Kelly staking is ruined; Deflated Sharpe 0.00. The market is calibrated 
 and the model's information is a subset of the market's.
 
 ### Experiment registry (`docs/EXPERIMENT_REGISTRY.md`)
-37 out-of-sample comparisons, Holm and Benjamini-Hochberg corrected: only the cross-season
+38 out-of-sample comparisons, Holm and Benjamini-Hochberg corrected: only the cross-season
 rating filter survives. The 2,494-game holdout can only detect improvements above ~0.0056
 log loss; confirming a 0.002 gain would take ~69 NFL seasons.
 
@@ -154,6 +160,7 @@ src/data/          nflverse ingestion (schedules, play-by-play cache), futures o
 src/features/      everything computed from data, pregame-safe
 src/models/        walk-forward, market benchmark, experiments
 src/simulation/    seeding, bracket simulator, futures backtest
+src/opponents/     opponent forecasts: horizon study, playoff paths, per-team report
 src/live/          prediction ledger, weekly logging, scoring
 docs/METHODS.md    the statistics, explained
 tests/             leakage and integrity tests
@@ -175,7 +182,8 @@ Betting prices on the site come from nflverse's schedule file, never from the Co
 
 ## Paper
 
-`paper/paper.qmd` is a Quarto source for the write-up. The PDF is typeset with LaTeX (article class, LuaLaTeX,
+`paper/paper.qmd` is a Quarto source for the write-up (model evaluation); `paper/opponent_forecasting.qmd` is a second, shorter
+paper on forecasting a team's opponents (see [`docs/OPPONENTS.md`](docs/OPPONENTS.md)). The PDF is typeset with LaTeX (article class, LuaLaTeX,
 natbib author-year citations with a BibTeX bibliography, booktabs tables, numbered equations, vector figures in
 Computer Modern); the same source also builds an HTML version. Every number comes from the pipeline through
 `paper/_variables.yml`; figures and tables are generated, not drawn.
