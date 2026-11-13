@@ -1,6 +1,6 @@
 | Round | Chance of playing it | If it gets there: most likely opponents (share; win chance) |
 |:--|--:|:--|
-| Wild Card | 10.6% | GB 17% (45%); CHI 16% (52%); DET 15% (58%); LAR 13% (39%) |
-| Divisional | 5.4% | SF 26% (35%); CHI 15% (38%); DET 13% (43%); GB 12% (35%) |
-| Conference championship | 2.2% | SF 34% (35%); CHI 11% (42%); GB 11% (32%); DET 10% (36%) |
-| Super Bowl | 0.9% | JAX 28% (37%); BUF 25% (31%); KC 15% (33%); CIN 11% (39%) |
+| Wild Card | 16.3% | CHI 17% (50%); GB 17% (41%); DET 16% (51%); LAR 14% (38%) |
+| Divisional | 7.7% | SF 26% (32%); CHI 17% (35%); DET 14% (40%); GB 14% (34%) |
+| Conference championship | 2.9% | SF 34% (34%); CHI 13% (39%); GB 12% (37%); DET 10% (41%) |
+| Super Bowl | 1.1% | BUF 28% (34%); JAX 27% (38%); KC 16% (42%); CIN 8% (44%) |

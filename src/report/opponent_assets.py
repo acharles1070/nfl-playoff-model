@@ -18,7 +18,7 @@ from src.opponents.report import ordinal
 from src.report.paper_assets import AMBER, BLUE, FIG, GRAY, GREEN, RED, TAB, VIOLET, plt, save, typo
 
 DOCS = project_path("docs")
-EXAMPLE = "WAS_2026_w10"
+EXAMPLE = "WAS_2026_w11"
 BUCKETS = ["0", "1", "2", "3-4", "5-8", "9+"]
 BUCKET_LABELS = ["0", "1", "2", "3–4", "5–8", "9+"]          # tables
 FIG_LABELS = ["0", "1", "2", "3-4", "5-8", "9+"]             # figures: the Computer Modern font has no en dash

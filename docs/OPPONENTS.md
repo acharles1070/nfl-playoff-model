@@ -15,7 +15,7 @@ python -m src.opponents.report --team WAS    # any team abbreviation; --season a
 ```
 
 This writes a JSON file, a Markdown brief and a CSV of the games to `outputs/opponents/`. A worked example is
-checked in at [`docs/examples/WAS_2026_w10.md`](examples/WAS_2026_w10.md) (the format matters, the numbers change weekly).
+checked in at [`docs/examples/WAS_2026_w11.md`](examples/WAS_2026_w11.md) (the format matters, the numbers change weekly).
 
 The report is built from games before the as-of week only, where the as-of week is the week after the last one
 with a result. A game from an earlier week that has not been played yet (Monday night) stays on the schedule.

@@ -1,0 +1,472 @@
+{
+ "schema": 1,
+ "team": "WAS",
+ "name": "Washington Commanders",
+ "conference": "NFC",
+ "division": "NFC East",
+ "season": 2026,
+ "as_of_week": 11,
+ "generated_utc": "2026-11-13T19:51:35Z",
+ "data_through": "2026-11-12",
+ "model": {
+  "game_model": "ratings_qb_logit_v1",
+  "season_simulator": "season_sim_v2",
+  "horizon_shrink_a": 0.0218,
+  "band_level": 0.8,
+  "n_sims": 65536,
+  "seed": 202611,
+  "replacement_qb_epa": -0.0064,
+  "replacement_qb_pts": -0.4
+ },
+ "record": {
+  "wins": 3,
+  "losses": 5,
+  "ties": 1
+ },
+ "rating": {
+  "net_pts": -1.37,
+  "rank": 23,
+  "offense_pts": -0.97,
+  "qb_pts": 1.66,
+  "defense_pts": -2.07,
+  "qb": "J.Daniels",
+  "qb_starts": 34
+ },
+ "outlook": {
+  "expected_wins": 7.07,
+  "wins_p10": 4.5,
+  "wins_p50": 7.5,
+  "wins_p90": 9.5,
+  "p_playoffs": 0.1632,
+  "p_division": 0.1283,
+  "p_first_seed": 0.0001,
+  "p_win_conf": 0.0113,
+  "p_win_sb": 0.0046,
+  "p_seed": [
+   0.0001,
+   0.0017,
+   0.071,
+   0.0554,
+   0.0021,
+   0.009,
+   0.0238
+  ],
+  "wins_distribution": [
+   {
+    "wins": 3.5,
+    "p": 0.0354
+   },
+   {
+    "wins": 4.5,
+    "p": 0.0977
+   },
+   {
+    "wins": 5.5,
+    "p": 0.1594
+   },
+   {
+    "wins": 6.5,
+    "p": 0.202
+   },
+   {
+    "wins": 7.5,
+    "p": 0.1949
+   },
+   {
+    "wins": 8.5,
+    "p": 0.158
+   },
+   {
+    "wins": 9.5,
+    "p": 0.0971
+   },
+   {
+    "wins": 10.5,
+    "p": 0.0446
+   },
+   {
+    "wins": 11.5,
+    "p": 0.0108
+   }
+  ]
+ },
+ "schedule": {
+  "games": [
+   {
+    "week": 11,
+    "date": "2026-11-23",
+    "weeks_ahead": 0,
+    "opponent": "CIN",
+    "opponent_name": "Cincinnati Bengals",
+    "site": "H",
+    "rest_days": 11,
+    "opp_rest_days": 8,
+    "p_win": 0.3689,
+    "band_lo": 0.3265,
+    "band_hi": 0.4134,
+    "band_if_qb_change_lo": 0.2833,
+    "band_if_qb_change_hi": 0.4636,
+    "p_win_if_opp_qb_replaced": 0.5066,
+    "p_win_if_own_qb_replaced": 0.3144,
+    "opp_net_pts": 4.92,
+    "opp_rank": 11,
+    "opp_off_pts": 7.59,
+    "opp_def_pts": -2.67,
+    "opp_qb": "J.Burrow",
+    "opp_qb_id": "00-0036442",
+    "opp_qb_pts": 4.39,
+    "opp_qb_starts": 92
+   },
+   {
+    "week": 12,
+    "date": "2026-11-29",
+    "weeks_ahead": 1,
+    "opponent": "ARI",
+    "opponent_name": "Arizona Cardinals",
+    "site": "A",
+    "rest_days": 6,
+    "opp_rest_days": 7,
+    "p_win": 0.5182,
+    "band_lo": 0.438,
+    "band_hi": 0.5975,
+    "band_if_qb_change_lo": 0.4109,
+    "band_if_qb_change_hi": 0.6239,
+    "p_win_if_opp_qb_replaced": 0.5042,
+    "p_win_if_own_qb_replaced": 0.4589,
+    "opp_net_pts": -4.05,
+    "opp_rank": 26,
+    "opp_off_pts": -1.73,
+    "opp_def_pts": -2.32,
+    "opp_qb": "G.Minshew",
+    "opp_qb_id": "00-0035289",
+    "opp_qb_pts": -0.89,
+    "opp_qb_starts": 48
+   },
+   {
+    "week": 13,
+    "date": "2026-12-06",
+    "weeks_ahead": 2,
+    "opponent": "TEN",
+    "opponent_name": "Tennessee Titans",
+    "site": "A",
+    "rest_days": 7,
+    "opp_rest_days": 7,
+    "p_win": 0.5904,
+    "band_lo": 0.4794,
+    "band_hi": 0.6928,
+    "band_if_qb_change_lo": 0.4552,
+    "band_if_qb_change_hi": 0.7131,
+    "p_win_if_opp_qb_replaced": 0.5371,
+    "p_win_if_own_qb_replaced": 0.5331,
+    "opp_net_pts": -7.14,
+    "opp_rank": 32,
+    "opp_off_pts": -3.51,
+    "opp_def_pts": -3.63,
+    "opp_qb": "C.Ward",
+    "opp_qb_id": "00-0040676",
+    "opp_qb_pts": -2.32,
+    "opp_qb_starts": 25
+   },
+   {
+    "week": 14,
+    "date": "2026-12-13",
+    "weeks_ahead": 3,
+    "opponent": "HOU",
+    "opponent_name": "Houston Texans",
+    "site": "H",
+    "rest_days": 7,
+    "opp_rest_days": 7,
+    "p_win": 0.3884,
+    "band_lo": 0.2782,
+    "band_hi": 0.5114,
+    "band_if_qb_change_lo": 0.2635,
+    "band_if_qb_change_hi": 0.53,
+    "p_win_if_opp_qb_replaced": 0.4251,
+    "p_win_if_own_qb_replaced": 0.3358,
+    "opp_net_pts": 7.06,
+    "opp_rank": 8,
+    "opp_off_pts": 2.67,
+    "opp_def_pts": 4.39,
+    "opp_qb": "C.Stroud",
+    "opp_qb_id": "00-0039163",
+    "opp_qb_pts": 0.98,
+    "opp_qb_starts": 60
+   },
+   {
+    "week": 15,
+    "date": "2026-12-20",
+    "weeks_ahead": 4,
+    "opponent": "ATL",
+    "opponent_name": "Atlanta Falcons",
+    "site": "H",
+    "rest_days": 7,
+    "opp_rest_days": 7,
+    "p_win": 0.5576,
+    "band_lo": 0.4178,
+    "band_hi": 0.6889,
+    "band_if_qb_change_lo": 0.4068,
+    "band_if_qb_change_hi": 0.6985,
+    "p_win_if_opp_qb_replaced": 0.5955,
+    "p_win_if_own_qb_replaced": 0.502,
+    "opp_net_pts": -0.43,
+    "opp_rank": 20,
+    "opp_off_pts": -1.44,
+    "opp_def_pts": 1.02,
+    "opp_qb": "M.Penix",
+    "opp_qb_id": "00-0039917",
+    "opp_qb_pts": 1.03,
+    "opp_qb_starts": 19
+   },
+   {
+    "week": 16,
+    "date": "2026-12-27",
+    "weeks_ahead": 5,
+    "opponent": "MIN",
+    "opponent_name": "Minnesota Vikings",
+    "site": "A",
+    "rest_days": 7,
+    "opp_rest_days": 7,
+    "p_win": 0.4818,
+    "band_lo": 0.3358,
+    "band_hi": 0.6309,
+    "band_if_qb_change_lo": 0.3291,
+    "band_if_qb_change_hi": 0.6379,
+    "p_win_if_opp_qb_replaced": 0.437,
+    "p_win_if_own_qb_replaced": 0.4275,
+    "opp_net_pts": 1.65,
+    "opp_rank": 16,
+    "opp_off_pts": -7.94,
+    "opp_def_pts": 9.59,
+    "opp_qb": "C.Wentz",
+    "opp_qb_id": "00-0032950",
+    "opp_qb_pts": -2.1,
+    "opp_qb_starts": 102
+   },
+   {
+    "week": 17,
+    "date": "2027-01-03",
+    "weeks_ahead": 6,
+    "opponent": "JAX",
+    "opponent_name": "Jacksonville Jaguars",
+    "site": "A",
+    "rest_days": 7,
+    "opp_rest_days": 7,
+    "p_win": 0.2023,
+    "band_lo": 0.1179,
+    "band_hi": 0.325,
+    "band_if_qb_change_lo": 0.1092,
+    "band_if_qb_change_hi": 0.3442,
+    "p_win_if_opp_qb_replaced": 0.2677,
+    "p_win_if_own_qb_replaced": 0.1699,
+    "opp_net_pts": 12.81,
+    "opp_rank": 1,
+    "opp_off_pts": 6.84,
+    "opp_def_pts": 5.97,
+    "opp_qb": "T.Lawrence",
+    "opp_qb_id": "00-0036971",
+    "opp_qb_pts": 3.11,
+    "opp_qb_starts": 88
+   },
+   {
+    "week": 18,
+    "date": "2027-01-10",
+    "weeks_ahead": 7,
+    "opponent": "DAL",
+    "opponent_name": "Dallas Cowboys",
+    "site": "H",
+    "rest_days": 7,
+    "opp_rest_days": 7,
+    "p_win": 0.4907,
+    "band_lo": 0.3218,
+    "band_hi": 0.6617,
+    "band_if_qb_change_lo": 0.3097,
+    "band_if_qb_change_hi": 0.6742,
+    "p_win_if_opp_qb_replaced": 0.601,
+    "p_win_if_own_qb_replaced": 0.4383,
+    "opp_net_pts": -0.07,
+    "opp_rank": 18,
+    "opp_off_pts": 4.74,
+    "opp_def_pts": -4.81,
+    "opp_qb": "D.Prescott",
+    "opp_qb_id": "00-0033077",
+    "opp_qb_pts": 3.97,
+    "opp_qb_starts": 155
+   }
+  ],
+  "remaining": 8,
+  "expected_wins": 3.6,
+  "strength_pts": 1.84,
+  "strength_rank_hardest": 19,
+  "teams": 32
+ },
+ "playoff_path": [
+  {
+   "round": "WC",
+   "round_name": "Wild Card",
+   "p_reach": 0.1631,
+   "opponents": [
+    {
+     "team": "CHI",
+     "name": "Chicago Bears",
+     "p_meet": 0.0283,
+     "p_given_reach": 0.1736,
+     "p_win_if_meet": 0.4962
+    },
+    {
+     "team": "GB",
+     "name": "Green Bay Packers",
+     "p_meet": 0.0273,
+     "p_given_reach": 0.1674,
+     "p_win_if_meet": 0.4101
+    },
+    {
+     "team": "DET",
+     "name": "Detroit Lions",
+     "p_meet": 0.0256,
+     "p_given_reach": 0.1569,
+     "p_win_if_meet": 0.5081
+    },
+    {
+     "team": "LAR",
+     "name": "Los Angeles Rams",
+     "p_meet": 0.0226,
+     "p_given_reach": 0.1383,
+     "p_win_if_meet": 0.385
+    },
+    {
+     "team": "SEA",
+     "name": "Seattle Seahawks",
+     "p_meet": 0.02,
+     "p_given_reach": 0.1225,
+     "p_win_if_meet": 0.4489
+    }
+   ]
+  },
+  {
+   "round": "DIV",
+   "round_name": "Divisional",
+   "p_reach": 0.077,
+   "opponents": [
+    {
+     "team": "SF",
+     "name": "San Francisco 49ers",
+     "p_meet": 0.0203,
+     "p_given_reach": 0.2636,
+     "p_win_if_meet": 0.3211
+    },
+    {
+     "team": "CHI",
+     "name": "Chicago Bears",
+     "p_meet": 0.0129,
+     "p_given_reach": 0.1677,
+     "p_win_if_meet": 0.3546
+    },
+    {
+     "team": "DET",
+     "name": "Detroit Lions",
+     "p_meet": 0.0111,
+     "p_given_reach": 0.1443,
+     "p_win_if_meet": 0.3956
+    },
+    {
+     "team": "GB",
+     "name": "Green Bay Packers",
+     "p_meet": 0.0105,
+     "p_given_reach": 0.1358,
+     "p_win_if_meet": 0.3431
+    },
+    {
+     "team": "LAR",
+     "name": "Los Angeles Rams",
+     "p_meet": 0.0051,
+     "p_given_reach": 0.0666,
+     "p_win_if_meet": 0.3185
+    }
+   ]
+  },
+  {
+   "round": "CON",
+   "round_name": "Conference championship",
+   "p_reach": 0.0289,
+   "opponents": [
+    {
+     "team": "SF",
+     "name": "San Francisco 49ers",
+     "p_meet": 0.0097,
+     "p_given_reach": 0.3358,
+     "p_win_if_meet": 0.3365
+    },
+    {
+     "team": "CHI",
+     "name": "Chicago Bears",
+     "p_meet": 0.0037,
+     "p_given_reach": 0.1288,
+     "p_win_if_meet": 0.3852
+    },
+    {
+     "team": "GB",
+     "name": "Green Bay Packers",
+     "p_meet": 0.0036,
+     "p_given_reach": 0.1235,
+     "p_win_if_meet": 0.3675
+    },
+    {
+     "team": "DET",
+     "name": "Detroit Lions",
+     "p_meet": 0.003,
+     "p_given_reach": 0.104,
+     "p_win_if_meet": 0.4061
+    },
+    {
+     "team": "LAR",
+     "name": "Los Angeles Rams",
+     "p_meet": 0.0027,
+     "p_given_reach": 0.094,
+     "p_win_if_meet": 0.3933
+    }
+   ]
+  },
+  {
+   "round": "SB",
+   "round_name": "Super Bowl",
+   "p_reach": 0.0113,
+   "opponents": [
+    {
+     "team": "BUF",
+     "name": "Buffalo Bills",
+     "p_meet": 0.0032,
+     "p_given_reach": 0.284,
+     "p_win_if_meet": 0.3412
+    },
+    {
+     "team": "JAX",
+     "name": "Jacksonville Jaguars",
+     "p_meet": 0.003,
+     "p_given_reach": 0.2651,
+     "p_win_if_meet": 0.3807
+    },
+    {
+     "team": "KC",
+     "name": "Kansas City Chiefs",
+     "p_meet": 0.0018,
+     "p_given_reach": 0.1588,
+     "p_win_if_meet": 0.4153
+    },
+    {
+     "team": "CIN",
+     "name": "Cincinnati Bengals",
+     "p_meet": 0.001,
+     "p_given_reach": 0.0848,
+     "p_win_if_meet": 0.4444
+    },
+    {
+     "team": "DEN",
+     "name": "Denver Broncos",
+     "p_meet": 0.0008,
+     "p_given_reach": 0.0673,
+     "p_win_if_meet": 0.5
+    }
+   ]
+  }
+ ]
+}
